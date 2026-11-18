@@ -69,8 +69,11 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         self.hide_button.add_css_class('scratchpad-hide')
         row = Gtk.Box(spacing=6)
         row.set_direction(Gtk.TextDirection.LTR)
-        for widget in (self.copy_button, self.hide_button, handle):
-            row.append(widget)
+        controls = Gtk.Box(spacing=1)
+        controls.append(self.copy_button)
+        controls.append(self.hide_button)
+        row.append(controls)
+        row.append(handle)
         layout = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         layout.add_css_class('scratchpad-bar')
         layout.append(row)
