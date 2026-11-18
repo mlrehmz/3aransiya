@@ -26,3 +26,22 @@ The reported phrase `asba7na wa asbaha lmolko lilah` is an invocation, **أصب�
 ## Proposed next action
 
 Fetch the pinned combined object locally and verify the LFS checksum. Sample grounded and exploratory rows independently with a fixed seed. Measure schema validity, sentence overlap, alignment yield, and manually check candidate word pairs for shifted boundaries, incorrect characters, and spelling conventions. Use the grounded sample first to decide whether it can cover the gap. Keep synthetic additions out of the existing validation and test assignments and filter overlaps against their sentence keys before word extraction. No corpus rows were downloaded during this source audit.
+
+## Verified local sample
+
+Downloaded the full 229,170,725-byte object from GitHub's LFS batch endpoint and verified the pinned SHA-256. The direct media URL timed out. A streaming scan counted 48,350 human, 226,000 grounded, and 226,000 exploratory rows and confirmed the source fields `darija_latin`, `darija_arabic`, and `generation_mode`.
+
+Sampled 1,000 rows per synthetic group using Python `Random(42)` and row positions within each group. Compared normalized full-sentence keys with the original human corpus, removed exact normalized bilingual sentence duplicates within each sample, and split both sides on whitespace. Required equal token counts, one normalized token per whitespace segment, and compatible scripts or matched digit anchors. Excluded digit-only anchors from the pair count and applied the current model's input and output length bounds.
+
+| Sample | Rows passing | Candidate occurrences | Distinct Latin–Arabic pairs | Distinct pairs new versus v1 training |
+| --- | ---: | ---: | ---: | ---: |
+| Grounded | 464 / 1,000 | 4,383 | 2,542 | 1,641 |
+| Exploratory | 301 / 1,000 | 2,674 | 1,518 | 962 |
+
+Unequal whitespace counts affected 355 grounded and 398 exploratory rows. A further 167 and 291 respectively had segments with multiple normalized tokens or no token, such as text split by internal punctuation. No sampled rows matched the normalized human sentence keys or duplicated a full pair within their own sample. Neither observation rules out overlap in a full scan.
+
+Reviewed 30 candidate occurrences per group in sentence context. Many were plausible, but equal lengths still admitted shifted pairings. In grounded row 10121, `drari` aligned to غايحدر and `f` aligned to الدراري after a missing Latin name token and an attached Arabic preposition offset each other. In exploratory row 412672, `man` aligned to ما, losing part of the word at a boundary. These examples are why positional matches need alignment checks before they become training labels.
+
+The grounded sample yields 4.383 screened occurrences per source row, above the 1.964 needed for the occurrence target. This is a count of candidates. It does not establish accepted yield or a total of 600,000 distinct pairs. Unique counts from a small sample cannot be scaled linearly because later sentences reuse words. V1 itself has 156,219 training occurrences, 42,698 distinct Latin–Arabic pairs, and 37,365 distinct Latin forms.
+
+**Proposed next action:** Scan the full grounded subset and count candidates both before and after deduplication by `(Latin, Arabic)`. Report the full counts, overlap, and conflicting references before selecting a training dataset. Retain occurrence counts as metadata so we can compare uniform sampling over distinct pairs with controlled replay of common forms later. The corpus remains local and no training ran.
