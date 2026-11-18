@@ -18,6 +18,8 @@ LATIN_TOKEN = re.compile(r'[A-Za-z0-9]+')
 WORD = re.compile(r'[A-Za-z0-9]+\Z')
 MAX_WORD = 128
 MAX_WAITING = 16
+COPY_ICON = 'media-playback-stop-symbolic'
+HIDE_ICON = 'media-record-symbolic'
 
 
 class ScratchpadWindow(Gtk.ApplicationWindow):
@@ -61,8 +63,8 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         output.set_child(self.preview)
         handle = Gtk.WindowHandle(hexpand=True, vexpand=True)
         handle.set_child(output)
-        self.copy_button = self._icon('edit-copy-symbolic', 'Copy selection or draft', self._copy)
-        self.hide_button = self._icon('window-minimize-symbolic', 'Hide scratchpad', lambda _: self.minimize())
+        self.copy_button = self._icon(COPY_ICON, 'Copy selection or draft', self._copy)
+        self.hide_button = self._icon(HIDE_ICON, 'Hide scratchpad', lambda _: self.minimize())
         self.copy_button.add_css_class('scratchpad-copy')
         self.hide_button.add_css_class('scratchpad-hide')
         row = Gtk.Box(spacing=6)
@@ -122,7 +124,7 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
 
     def _reset_copy_feedback(self):
         self._copy_feedback = 0
-        self.copy_button.set_icon_name('edit-copy-symbolic')
+        self.copy_button.set_icon_name(COPY_ICON)
         self.copy_button.remove_css_class('copied')
         return GLib.SOURCE_REMOVE
 
