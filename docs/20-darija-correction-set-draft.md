@@ -39,3 +39,17 @@ Keep these word families out of the corrective examples. The starting model may 
 - Confirm the full spelling of `prizontasyon` and where پ is required in loanwords. Both bundles already have پ in their output vocabulary. It appears in 183 training occurrences, but neither bundle used it for `prizontasyon`. The encoder–decoder returned برزيتونيش and GRU/CTC returned بريزنتسيون. Case-insensitive searches found no `prizontasyon`, `presentation`, `présentation`, `prezentasyon`, or `prezontasyon` in training.
 
 **Proposed next action:** Review these labels and record a pre-fine-tuning score on the held-out examples. Compare a later Darija fine-tune with the current model on those examples and on unchanged validation. Include replay from original training data in the fine-tuning plan to measure regressions. Evaluate MSA pretraining separately.
+
+## Baseline before fine-tuning
+
+Ran both epoch-six bundles locally and compared outputs by normalized exact match. The draft examples and held-out word families were scored separately. The provisional `prizontasyon` label was checked separately. Standalone `2o` and both proposed pizza inputs were excluded.
+
+| Slice | Encoder–decoder | GRU/CTC |
+| --- | ---: | ---: |
+| Draft examples | 9 / 16 | 8 / 16 |
+| Held-out word families | 6 / 9 | 5 / 9 |
+| Provisional `prizontasyon` example | 0 / 1 | 0 / 1 |
+
+Both models missed the six draft x/X forms and the two authored held-out x/X forms, `X7al` and `xrebt`. Their paired ch spellings matched. Both preserved خ in `khobz`, `5obz`, and `khouya`. Neither matched the held-out name `REX` despite its one training occurrence. The encoder–decoder matched both cup spellings and both “responsible” spellings. CTC missed `ka2s` and `mas2oul`. For `sport`, the encoder–decoder used ب and CTC used پ but added ت.
+
+This small baseline is intended to catch specific regressions after fine-tuning. The held-out families were excluded from the correction set. Some of their established forms were in the original training corpus. No fine-tuning or locked-test evaluation took place.
