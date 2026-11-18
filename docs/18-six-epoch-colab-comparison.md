@@ -35,3 +35,5 @@ The epoch-six encoder–decoder loaded through the existing CPU helper on Fedora
 ## Model-aware GNOME launcher
 
 The installer accepts `--bundle` and writes the bundle-specific GTK application ID alongside the launcher. The extension uses that ID to find and refocus the correct window. A temporary install verified the trained bundle path with spaces and parentheses, the generated shell command, the default install, and rejection of a missing bundle. The currently installed extension was outside this change. Top-bar launch and refocus still need a live check after installation.
+
+The model-aware extension was installed with `bundle-d4307181ae640820` and GNOME reported it active after reloading. Executing its installed launcher registered the expected model-specific GTK application ID. A second invocation kept the same D-Bus owner and reported that it opened the running window. A click on the GNOME panel and cross-workspace refocus still require desktop confirmation.
