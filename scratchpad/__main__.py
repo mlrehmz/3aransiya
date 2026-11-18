@@ -2,7 +2,6 @@
 
 from collections import deque
 import argparse
-from hashlib import sha256
 import os
 from pathlib import Path
 import re
@@ -11,7 +10,7 @@ from .word_range import WordRange
 from gi.repository import Gdk, Gio, GLib, Gtk, Pango
 
 from .composition import PredictionRequest
-from .predictor import HelperPredictor, MockPredictor
+from .predictor import HelperPredictor, MockPredictor, application_id
 from .worker import PredictionWorker
 
 LATIN_TOKEN = re.compile(r'[A-Za-z0-9]+')
@@ -311,19 +310,17 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
 
 class ScratchpadApplication(Gtk.Application):
     def __init__(self, *, synthetic_helper=False, bundle=None):
-        application_id = 'io.github.aransiya.Scratchpad'
+        app_id = application_id(bundle)
         python = Path(__file__).resolve().parents[1] / '.venv/bin/python'
         self._helper_command = None
         if bundle is not None:
             bundle = Path(bundle).resolve()
-            bundle_id = sha256(os.fsencode(bundle)).hexdigest()[:16]
-            application_id += f'.Model{bundle_id}'
             self._helper_command = [python, '-m', 'model_pilot.inference_helper', bundle]
         elif synthetic_helper:
-            application_id += '.Synthetic'
+            app_id += '.Synthetic'
             self._helper_command = [python, '-m', 'scratchpad.synthetic_helper']
         super().__init__(
-            application_id=application_id,
+            application_id=app_id,
             flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE,
         )
         self.window = None

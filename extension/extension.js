@@ -11,6 +11,12 @@ const APP_ID = 'io.github.aransiya.Scratchpad';
 export default class ScratchpadExtension extends Extension {
     enable() {
         this._timer = 0;
+        const installedId = this.dir.get_child('application-id');
+        this._appId = APP_ID;
+        if (installedId.query_exists(null)) {
+            const [, contents] = installedId.load_contents(null);
+            this._appId = new TextDecoder().decode(contents).trim();
+        }
         this._indicator = new PanelMenu.Button(0, this.metadata.name, true);
         const button = new St.Button({
             accessible_name: 'Open 3aransiya',
@@ -35,7 +41,7 @@ export default class ScratchpadExtension extends Extension {
     _findWindow() {
         return global.get_window_actors()
             .map(actor => actor.meta_window)
-            .find(window => window.get_gtk_application_id() === APP_ID);
+            .find(window => window.get_gtk_application_id() === this._appId);
     }
 
     _focus(window) {

@@ -31,3 +31,7 @@ The archive retains checkpoints for steps 7,325 and 7,326 for both candidates. E
 The epoch-six encoder–decoder loaded through the existing CPU helper on Fedora, and the GTK editor handled the synthetic keystroke sequence `salam 3likom! 42 `. The Arabizi draft stayed intact. The Arabic output row and the clipboard both contained `سلام عليكم! 42 `, preserving punctuation, whitespace, and standalone digits. The worker shut down cleanly. This was a typing and copy smoke test with trained weights. It did not measure latency or score the locked test.
 
 **Proposed next action:** Add a way to choose the verified local bundle when installing the GNOME launcher, so the top-bar button can open the model-backed scratchpad.
+
+## Model-aware GNOME launcher
+
+The installer accepts `--bundle` and writes the bundle-specific GTK application ID alongside the launcher. The extension uses that ID to find and refocus the correct window. A temporary install verified the trained bundle path with spaces and parentheses, the generated shell command, the default install, and rejection of a missing bundle. The currently installed extension was outside this change. Top-bar launch and refocus still need a live check after installation.

@@ -110,3 +110,15 @@ selected. Use Ctrl+S to start over and Ctrl+Z to restore that draft.
 
 The Arabizi row uses [Kalam](https://github.com/google/fonts/tree/main/ofl/kalam)
 when installed. GTK uses a fallback font on systems without it.
+
+To make the top-bar button open an exported model, pass its bundle directory
+when installing. Run the installer with the system Python that provides GTK.
+
+```sh
+python extension/install.py --bundle '/path/to/bundle'
+```
+
+The installer records the bundle's application ID so the extension can focus
+the same model window on subsequent clicks. Install again without `--bundle`
+to restore the development launch. If the extension is already enabled, reload
+it so it picks up the new launcher configuration.

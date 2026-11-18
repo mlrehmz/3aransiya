@@ -1,6 +1,21 @@
 """Artificial predictions for editor development, never real transliterations."""
 
 
+from hashlib import sha256
+import os
+from pathlib import Path
+
+
+APP_ID = 'io.github.aransiya.Scratchpad'
+
+
+def application_id(bundle=None):
+    if bundle is None:
+        return APP_ID
+    digest = sha256(os.fsencode(Path(bundle).resolve())).hexdigest()[:16]
+    return f'{APP_ID}.Model{digest}'
+
+
 class MockPredictor:
     def __init__(self, *, fail: bool = False) -> None:
         self.fail = fail
