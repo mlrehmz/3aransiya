@@ -12,6 +12,19 @@ Use standard CPython **3.14** in a project-local virtual environment and install
 
 This check verified the published wheel tags against the host. Installation, import, and execution of GRU and CTC kernels remain to be verified.
 
+## Verified local environment
+
+Provisioned CPython **3.14.8** with uv and installed **PyTorch 2.11.0+cpu** in the ignored `.venv/`. [requirements-cpu.txt](../requirements-cpu.txt) pins all ten distributions installed in that environment. Reproduce from the repository root:
+
+```sh
+UV_CACHE_DIR="$PWD/data/uv-cache" UV_PYTHON_INSTALL_DIR="$PWD/data/uv-python" uv venv --python 3.14.8 --managed-python .venv
+UV_CACHE_DIR="$PWD/data/uv-cache" uv pip install --python .venv/bin/python --index-url https://download.pytorch.org/whl/cpu -r requirements-cpu.txt
+```
+
+Verified the exact Python and PyTorch versions and the CPU-only build. At one inference thread, a bidirectional GRU forward pass returned finite tensors with the expected shapes. CTC loss and gradients were finite for a repeated target with three available frames. The dependency check and all five discovered tests passed. PyTorch emitted an optional NumPy import warning. The checked tensor operations succeeded without NumPy.
+
+This environment supports Fedora inference development and latency measurements. The model training pilot is planned for Kaggle. The local checks used synthetic tensors.
+
 ## Next decision
 
-**Proposed, pending approval:** Provision the isolated CPU environment, verify the version and CPU-only build at import, and run a small GRU forward pass and CTC loss check before implementing the models.
+**Proposed, pending approval:** Check the Kaggle GPU image's Python and PyTorch versions and the official accelerator selection for using one visible T4. Record the training setup separately from the Fedora CPU environment.
