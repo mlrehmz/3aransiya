@@ -80,6 +80,12 @@ Verified the same v1 word-pair artifact and regenerated the training-only majori
 
 The ten new pairs added 62 matches over the previous pilot, a gain of 0.63 percentage points before rounding. The expanded baseline needs 275 more matches to reach 9,802 of 9,901. These are sensitivity results for fixed predictions. The pilot did not train a model, inspect the locked test, or adopt a release policy.
 
-## Next decision
+## Validation ceiling under the pilot rules
 
-**Proposed, pending approval:** Compute the best possible single output per form under these exact twelve pilot equivalences. Keep the same validation occurrences and references. Comparing that ceiling with the 99% target will show how much of the remaining gap can be closed by choosing better outputs and whether the current references and rubric need further work before training.
+For each covered common form, score every observed validation reference and every explicitly approved pilot spelling as a possible fixed output. Take the best result for that form and sum across forms. Any other output matches zero occurrences under these rules, so this gives the exact ceiling for one fixed output per form on this validation set.
+
+The ceiling is **9,573 / 9,901 (96.69%)** with the twelve pilot equivalences. The training-majority baseline scores **9,527 / 9,901 (96.22%)**. Choosing the best outputs retrospectively adds only 46 matches. The remaining 328 occurrences cannot all be matched by one output per form under these rules. The calculation does not determine which disagreements are valid variants or data errors.
+
+This is a development diagnostic based on validation labels. It is neither a deployable baseline nor a test-set estimate. The locked test stayed closed. Use strict and pilot variant-aware scores to track progress while iterating. Revisit reference quality and the release rubric after the first model comparison.
+
+**Recommended next iteration, pending approval:** Turn the current validation calculation into a reusable headless benchmark. Reproduce the training-majority scores, then add a way to score model predictions on the same occurrences. Include overall and unseen-form exact match so the model pilot can measure generalization beyond frequent forms.
