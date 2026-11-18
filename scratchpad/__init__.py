@@ -1,0 +1,1 @@
+"""Offline scratchpad components."""
