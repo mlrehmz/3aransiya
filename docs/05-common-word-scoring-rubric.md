@@ -62,6 +62,24 @@ The entries below use the [training context review](04-common-word-reference-aud
 
 Flag these for a separate extraction or reference decision. The proposed pilot uses the same predictions, references, and denominator as the two-equivalence run so the effect of the additional pairs can be measured directly. No validation or locked-test contexts were examined for this draft.
 
+## Expanded validation pilot
+
+Verified the same v1 word-pair artifact and regenerated the training-only majority predictions using the previous ranking and tie rules. The validation set, reference strings, and denominator were identical. The twelve approved pilot pairs were the only change from strict scoring. No reference corrections or exclusions were applied.
+
+| Latin form | Validation occurrences | Strict matches | Variant-aware matches | Added matches |
+| --- | ---: | ---: | ---: | ---: |
+| `m3a` | 86 | 47 | 86 | 39 |
+| `kayna` | 24 | 15 | 24 | 9 |
+| `f` | 114 | 99 | 114 | 15 |
+| `imta` | 27 | 14 | 27 | 13 |
+| `achno` | 22 | 12 | 22 | 10 |
+| `hiya` | 20 | 8 | 20 | 12 |
+| `lma` | 18 | 8 | 18 | 10 |
+| `lhadra` | 7 | 1 | 3 | 2 |
+| **All common forms** | **9,901** | **9,417 (95.11%)** | **9,527 (96.22%)** | **110** |
+
+The ten new pairs added 62 matches over the previous pilot, a gain of 0.63 percentage points before rounding. The expanded baseline needs 275 more matches to reach 9,802 of 9,901. These are sensitivity results for fixed predictions. The pilot did not train a model, inspect the locked test, or adopt a release policy.
+
 ## Next decision
 
-**Proposed, pending approval:** Run the expanded validation pilot with the ten listed pairs and the two from the prior pilot. Report strict and variant-aware matches, the incremental gain by form, and the remaining gap to 99%. The pilot does not adopt the entries as release policy.
+**Proposed, pending approval:** Compute the best possible single output per form under these exact twelve pilot equivalences. Keep the same validation occurrences and references. Comparing that ceiling with the 99% target will show how much of the remaining gap can be closed by choosing better outputs and whether the current references and rubric need further work before training.
