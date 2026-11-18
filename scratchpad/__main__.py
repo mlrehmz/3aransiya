@@ -113,7 +113,10 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
 
     @staticmethod
     def _glyph(name):
-        return Gtk.Image.new_from_file(str(Path(__file__).with_name('icons') / name))
+        image = Gtk.Image.new_from_file(str(Path(__file__).with_name('icons') / name))
+        image.set_halign(Gtk.Align.CENTER)
+        image.set_valign(Gtk.Align.CENTER)
+        return image
 
     def _copy(self, _button):
         bounds = self.buffer.get_selection_bounds() or self.buffer.get_bounds()
