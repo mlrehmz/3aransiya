@@ -1,6 +1,8 @@
-"""Launch the GTK scratchpad with the development predictor."""
+"""Launch the GTK scratchpad with an optional offline model bundle."""
 
 from collections import deque
+import argparse
+from hashlib import sha256
 import os
 from pathlib import Path
 import re
@@ -9,7 +11,7 @@ from .word_range import WordRange
 from gi.repository import Gdk, Gio, GLib, Gtk, Pango
 
 from .composition import PredictionRequest
-from .predictor import MockPredictor, SyntheticHelperPredictor
+from .predictor import HelperPredictor, MockPredictor
 from .worker import PredictionWorker
 
 LATIN_TOKEN = re.compile(r'[A-Za-z0-9]+')
@@ -19,7 +21,7 @@ MAX_WAITING = 16
 
 
 class ScratchpadWindow(Gtk.ApplicationWindow):
-    def __init__(self, application, *, synthetic_helper=False):
+    def __init__(self, application, *, helper_command=None):
         super().__init__(
             application=application, title='3aransiya', default_width=820,
             default_height=112, hide_on_close=True, decorated=False,
@@ -76,9 +78,8 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         self._refresh_source = 0
         self._copy_feedback = 0
         self._render_rows()
-        if synthetic_helper:
-            python = Path(__file__).resolve().parents[1] / '.venv/bin/python'
-            predictor = SyntheticHelperPredictor(python)
+        if helper_command is not None:
+            predictor = HelperPredictor(helper_command)
             self.worker = PredictionWorker(
                 predictor.predict, self._schedule_drain, on_close=predictor.close
             )
@@ -278,16 +279,23 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
 
 
 class ScratchpadApplication(Gtk.Application):
-    def __init__(self, *, synthetic_helper=False):
+    def __init__(self, *, synthetic_helper=False, bundle=None):
+        application_id = 'io.github.aransiya.Scratchpad'
+        python = Path(__file__).resolve().parents[1] / '.venv/bin/python'
+        self._helper_command = None
+        if bundle is not None:
+            bundle = Path(bundle).resolve()
+            bundle_id = sha256(os.fsencode(bundle)).hexdigest()[:16]
+            application_id += f'.Model{bundle_id}'
+            self._helper_command = [python, '-m', 'model_pilot.inference_helper', bundle]
+        elif synthetic_helper:
+            application_id += '.Synthetic'
+            self._helper_command = [python, '-m', 'scratchpad.synthetic_helper']
         super().__init__(
-            application_id=(
-                'io.github.aransiya.Scratchpad.Synthetic'
-                if synthetic_helper else 'io.github.aransiya.Scratchpad'
-            ),
+            application_id=application_id,
             flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE,
         )
         self.window = None
-        self._synthetic_helper = synthetic_helper
 
     def do_command_line(self, command_line):
         if Gdk.Display.get_default() is None:
@@ -307,7 +315,7 @@ class ScratchpadApplication(Gtk.Application):
             Gtk.StyleContext.add_provider_for_display(
                 Gdk.Display.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
             )
-            self.window = ScratchpadWindow(self, synthetic_helper=self._synthetic_helper)
+            self.window = ScratchpadWindow(self, helper_command=self._helper_command)
             self.add_action(self._quit_action())
             start_over = Gio.SimpleAction.new('start-over', None)
             start_over.connect('activate', lambda *_: self.window.start_over())
@@ -329,10 +337,13 @@ class ScratchpadApplication(Gtk.Application):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--bundle', type=Path, help='local v1 inference bundle directory')
+    options = parser.parse_args()
     synthetic_helper = os.environ.get('ARANSIYA_SYNTHETIC_HELPER') == '1'
-    application = ScratchpadApplication(synthetic_helper=synthetic_helper)
-    status = application.run()
-    if synthetic_helper and application.window is not None:
+    application = ScratchpadApplication(synthetic_helper=synthetic_helper, bundle=options.bundle)
+    status = application.run([])
+    if (synthetic_helper or options.bundle is not None) and application.window is not None:
         # Wait after the GTK loop so helper cleanup cannot block the editor.
         application.window.worker.join(17)
     raise SystemExit(status)

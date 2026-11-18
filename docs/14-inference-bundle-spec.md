@@ -49,3 +49,15 @@ Synthetic state round trips returned identical greedy outputs before export and 
 Checkpoint restore from a Kaggle run, trained-weight parity, and model-backed GTK launch remain to be verified.
 
 **Proposed next step:** Add an explicit bundle option to the GTK launcher and smoke-test the normal editor with a synthetic v1 bundle. Check that valid predictions reach the Arabic output row and that a bad bundle preserves the source draft.
+
+## GTK bundle launch
+
+From the repository root, launch the model-backed editor with Fedora's system Python. The model helper uses the existing project virtual environment.
+
+```sh
+python -m scratchpad --bundle /path/to/bundle
+```
+
+Each bundle path has its own GTK application identity. Reopening the same bundle focuses its existing window. The first prediction starts and warms the helper off the GTK thread. The standard and GNOME top-bar launch still use the development predictor.
+
+On Fedora, a synthetic CTC bundle converted `T7!` to `ت!` in the Arabic row while preserving `T7!` in the source draft. With corrupted weights, the editor reported the failure and preserved the same draft. Both workers shut down. Trained weights have yet to be exercised in GTK.
