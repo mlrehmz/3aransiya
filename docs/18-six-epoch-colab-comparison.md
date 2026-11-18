@@ -25,3 +25,9 @@ The encoder–decoder's common-word score peaked in epoch 4 at 95.02% strict and
 The archive retains checkpoints for steps 7,325 and 7,326 for both candidates. Epoch 4 has a validation report but no retained weights. This was an artifact review. No new training, inference benchmark, or locked-test scoring was run.
 
 **Proposed next action:** Try the exported epoch-six encoder–decoder in the Fedora scratchpad with a short manual typing and copy check. Its overall result makes it the better first app candidate on this validation set. Keep GRU/CTC available for comparison on unfamiliar words.
+
+## Fedora scratchpad check
+
+The epoch-six encoder–decoder loaded through the existing CPU helper on Fedora, and the GTK editor handled the synthetic keystroke sequence `salam 3likom! 42 `. The Arabizi draft stayed intact. The Arabic output row and the clipboard both contained `سلام عليكم! 42 `, preserving punctuation, whitespace, and standalone digits. The worker shut down cleanly. This was a typing and copy smoke test with trained weights. It did not measure latency or score the locked test.
+
+**Proposed next action:** Add a way to choose the verified local bundle when installing the GNOME launcher, so the top-bar button can open the model-backed scratchpad.
