@@ -67,7 +67,7 @@ python -m scratchpad
 ```
 
 Type a word using ASCII Latin letters and Arabizi digits. The mock preview
-appears below the editor. Type a separator to replace the source word with
+appears above the Arabizi editor in a right-to-left reading row. Type a separator to replace the source word with
 artificial output after a short delay. Standalone digits stay as typed. The
 close button hides the window and keeps its draft in memory. Run the launcher
 again to reopen it, or use Ctrl+Q to quit.
@@ -77,7 +77,7 @@ Multi-character paste remains literal. It uses GTK's default clipboard
 behavior. Automatic conversion before copying and the GNOME top-bar button
 are future work.
 
-The compact bar offers two icons beside the editor. Copy takes the selection,
+The compact bar puts Copy and Hide on the left. Enter inserts a line break immediately. Copy takes the selection,
 or the whole draft if nothing is selected. Hide keeps the draft in the running
 application. A second launch prints a confirmation when it opens that window.
 Drag the preview area to move the bar. Backdrop blur depends on the desktop

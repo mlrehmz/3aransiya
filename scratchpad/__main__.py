@@ -3,7 +3,6 @@
 from collections import deque
 from pathlib import Path
 import re
-from time import sleep
 
 from .word_range import Replacement, WordRange
 from gi.repository import Gdk, Gio, GLib, Gtk, Pango
@@ -12,6 +11,8 @@ from .composition import PredictionRequest
 from .predictor import MockPredictor
 from .worker import PredictionWorker
 
+ARABIC = re.compile(r'[\u0620-\u063f\u0641-\u065f\u066e-\u06d3\u0750-\u077f\u0870-\u08ff]+(?:[0-9]+)?')
+LATIN_TOKEN = re.compile(r'[A-Za-z0-9]+')
 WORD = re.compile(r'[A-Za-z0-9]+\Z')
 MAX_WORD = 128
 MAX_WAITING = 16
@@ -21,36 +22,47 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
     def __init__(self, application):
         super().__init__(
             application=application, title='3aransiya', default_width=820,
-            default_height=72, hide_on_close=True, decorated=False,
+            default_height=112, hide_on_close=True, decorated=False,
         )
         self.add_css_class('scratchpad-window')
         self.editor = Gtk.TextView(wrap_mode=Gtk.WrapMode.WORD_CHAR)
-        self.editor.set_direction(Gtk.TextDirection.RTL)
-        self.editor.set_justification(Gtk.Justification.RIGHT)
+        self.editor.set_direction(Gtk.TextDirection.LTR)
+        self.editor.set_justification(Gtk.Justification.LEFT)
         self.editor.set_left_margin(10)
         self.editor.set_right_margin(10)
-        self.editor.set_top_margin(7)
-        self.editor.set_bottom_margin(7)
+        self.editor.set_top_margin(3)
+        self.editor.set_bottom_margin(3)
         self.buffer = self.editor.get_buffer()
         self.buffer.set_enable_undo(True)
-        self.preview = Gtk.Label(label='Mock predictor', ellipsize=Pango.EllipsizeMode.END, max_width_chars=20)
+        self.editor.update_property([Gtk.AccessibleProperty.LABEL], ['Arabizi input'])
+        self._source_tag = self.buffer.create_tag('converted', invisible=True)
+        self.preview = Gtk.Label(wrap=True, xalign=0, justify=Gtk.Justification.RIGHT)
+        self.preview.set_direction(Gtk.TextDirection.RTL)
         self.preview.add_css_class('scratchpad-preview')
+        self._preview_output = None
+        self._tagged_draft = None
         self.status = Gtk.Label(wrap=True, visible=False)
         self.status.add_css_class('scratchpad-status')
         self.status.connect('notify::label', lambda label, _: label.set_visible(bool(label.get_text())))
-        scroller = Gtk.ScrolledWindow(hexpand=True, vexpand=True)
+        scroller = Gtk.ScrolledWindow(hexpand=True, vexpand=True, min_content_height=29)
         scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         scroller.set_child(self.editor)
-        handle = Gtk.WindowHandle()
-        handle.set_child(self.preview)
+        output = Gtk.ScrolledWindow(hexpand=True, vexpand=True, min_content_height=44)
+        output.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        output.set_child(self.preview)
+        handle = Gtk.WindowHandle(hexpand=True, vexpand=True)
+        handle.set_child(output)
         self.copy_button = self._icon('edit-copy-symbolic', 'Copy selection or draft', self._copy)
         self.hide_button = self._icon('window-minimize-symbolic', 'Hide scratchpad', lambda _: self.minimize())
-        row = Gtk.Box(spacing=6, vexpand=True)
-        for widget in (scroller, handle, self.copy_button, self.hide_button):
+        row = Gtk.Box(spacing=5)
+        row.set_direction(Gtk.TextDirection.LTR)
+        for widget in (self.copy_button, self.hide_button, handle):
             row.append(widget)
         layout = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
         layout.add_css_class('scratchpad-bar')
         layout.append(row)
+        layout.append(Gtk.Separator())
+        layout.append(scroller)
         layout.append(self.status)
         self.set_child(layout)
 
@@ -62,13 +74,7 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         self._applying = False
         self._closed = False
         self._refresh_source = 0
-        mock = MockPredictor()
-
-        def predict(word):
-            sleep(0.08)
-            return mock.predict(word)
-
-        self.worker = PredictionWorker(predict, self._schedule_drain)
+        self.worker = PredictionWorker(MockPredictor().predict, self._schedule_drain)
         self.buffer.connect_after('insert-text', self._inserted)
         self.buffer.connect('changed', self._schedule_refresh)
         self.buffer.connect('mark-set', self._schedule_refresh)
@@ -135,6 +141,7 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         request = self._request(word, text)
         self._waiting.append((request, WordRange(buffer, start, end)))
         self._preview_request = None
+        self._preview_output = None
         self._start_next()
 
     def _start_next(self):
@@ -160,13 +167,37 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         candidate = self._word_before(cursor)
         if self.buffer.get_has_selection() or candidate is None or candidate[1].isdecimal():
             self._preview_request = None
-            self.preview.set_text('Mock predictor')
+            self._preview_output = None
         elif self._preview_request is None or candidate[1] != self._preview_request.word:
-            self.preview.set_text('Mock predictor')
+            self._preview_output = None
             request = self._request(candidate[1])
             if self.worker.submit(request):
                 self._preview_request = request
+        self._render_rows()
         return False
+
+    def _render_rows(self):
+        start, end = self.buffer.get_bounds()
+        draft = self.buffer.get_text(start, end, True)
+        if draft != self._tagged_draft:
+            self._tagged_draft = draft
+            self.buffer.remove_tag(self._source_tag, start, end)
+            for span in ARABIC.finditer(draft):
+                first, last = span.span()
+                self.buffer.apply_tag(self._source_tag, self.buffer.get_iter_at_offset(first),
+                                      self.buffer.get_iter_at_offset(last))
+        cursor = self.buffer.get_iter_at_mark(self.buffer.get_insert()).get_offset()
+
+        def render_token(match):
+            token = match[0]
+            if token.isdecimal():
+                return token
+            if (self._preview_output and self._preview_request
+                    and match.end() == cursor and token == self._preview_request.word):
+                return self._preview_output
+            return ''
+
+        self.preview.set_text(LATIN_TOKEN.sub(render_token, draft))
 
     def _replace(self, marked, output):
         self._applying = True
@@ -195,7 +226,8 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
             cursor = self.buffer.get_iter_at_mark(self.buffer.get_insert())
             candidate = self._word_before(cursor)
             if candidate and candidate[1] == result.request.word and not self.buffer.get_has_selection():
-                self.preview.set_text(f'Mock preview   {result.output}')
+                self._preview_output = result.output
+                self._render_rows()
         return False
 
     def shutdown(self):

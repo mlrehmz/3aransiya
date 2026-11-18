@@ -12,13 +12,15 @@ window.scratchpad-window {
 .scratchpad-bar textview,
 .scratchpad-bar textview text {
   background-color: transparent;
-  color: #eaf2ff;
+  color: #adc1dc;
   caret-color: #b7d8ff;
-  font-size: 17px;
+  font-size: 14px;
 }
 .scratchpad-preview {
   padding: 0 8px;
-  color: #b7d8ff;
+  font-family: "Noto Naskh Arabic", "Vazirmatn", sans-serif;
+  font-size: 26px;
+  color: #f4f7ff;
 }
 .scratchpad-status {
   color: #ffdfaa;
@@ -34,4 +36,7 @@ window.scratchpad-window {
 .scratchpad-bar button:hover,
 .scratchpad-bar button:focus-visible {
   background: rgba(153, 191, 255, 0.20);
+}
+.scratchpad-bar separator {
+  background: rgba(153, 191, 255, 0.19);
 }
