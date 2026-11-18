@@ -74,6 +74,7 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         self._applying = False
         self._closed = False
         self._refresh_source = 0
+        self._copy_feedback = 0
         self.worker = PredictionWorker(MockPredictor().predict, self._schedule_drain)
         self.buffer.connect_after('insert-text', self._inserted)
         self.buffer.connect('changed', self._schedule_refresh)
@@ -91,7 +92,21 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
 
     def _copy(self, _button):
         bounds = self.buffer.get_selection_bounds() or self.buffer.get_bounds()
-        self.editor.get_clipboard().set(self.buffer.get_text(*bounds, True))
+        text = self.buffer.get_text(*bounds, True)
+        if not text:
+            return
+        self.editor.get_clipboard().set(text)
+        if self._copy_feedback:
+            GLib.source_remove(self._copy_feedback)
+        self.copy_button.set_icon_name('object-select-symbolic')
+        self.copy_button.add_css_class('copied')
+        self._copy_feedback = GLib.timeout_add(1100, self._reset_copy_feedback)
+
+    def _reset_copy_feedback(self):
+        self._copy_feedback = 0
+        self.copy_button.set_icon_name('edit-copy-symbolic')
+        self.copy_button.remove_css_class('copied')
+        return GLib.SOURCE_REMOVE
 
     def _history_start(self, *_):
         self._applying = True
@@ -233,6 +248,9 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
     def shutdown(self):
         self._closed = True
         self.worker.close()
+        if self._copy_feedback:
+            GLib.source_remove(self._copy_feedback)
+            self._copy_feedback = 0
         if self._refresh_source:
             GLib.source_remove(self._refresh_source)
             self._refresh_source = 0

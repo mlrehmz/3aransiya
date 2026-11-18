@@ -4,9 +4,9 @@ window.scratchpad-window {
 }
 .scratchpad-bar {
   padding: 7px;
-  border: 1px solid rgba(153, 191, 255, 0.42);
+  border: 1px solid rgba(181, 202, 231, 0.25);
   border-radius: 15px;
-  background-image: linear-gradient(115deg, rgba(28, 42, 67, 0.93), rgba(18, 25, 42, 0.89));
+  background-image: linear-gradient(115deg, rgba(31, 39, 53, 0.91), rgba(16, 22, 33, 0.88));
   color: #eaf2ff;
 }
 .scratchpad-bar textview,
@@ -31,12 +31,15 @@ window.scratchpad-window {
   padding: 3px;
   border-radius: 9px;
   background: transparent;
-  color: #eaf2ff;
+  color: #b6c6df;
+}
+.scratchpad-bar button.copied {
+  color: #9cd9be;
 }
 .scratchpad-bar button:hover,
 .scratchpad-bar button:focus-visible {
   background: rgba(153, 191, 255, 0.20);
 }
 .scratchpad-bar separator {
-  background: rgba(153, 191, 255, 0.19);
+  background: rgba(181, 202, 231, 0.13);
 }
