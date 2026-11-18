@@ -1,0 +1,37 @@
+window.scratchpad-window {
+  background-color: transparent;
+  backdrop-filter: blur(20px);
+}
+.scratchpad-bar {
+  padding: 7px;
+  border: 1px solid rgba(153, 191, 255, 0.42);
+  border-radius: 15px;
+  background-image: linear-gradient(115deg, rgba(28, 42, 67, 0.93), rgba(18, 25, 42, 0.89));
+  color: #eaf2ff;
+}
+.scratchpad-bar textview,
+.scratchpad-bar textview text {
+  background-color: transparent;
+  color: #eaf2ff;
+  caret-color: #b7d8ff;
+  font-size: 17px;
+}
+.scratchpad-preview {
+  padding: 0 8px;
+  color: #b7d8ff;
+}
+.scratchpad-status {
+  color: #ffdfaa;
+}
+.scratchpad-bar button {
+  min-width: 28px;
+  min-height: 28px;
+  padding: 3px;
+  border-radius: 9px;
+  background: transparent;
+  color: #eaf2ff;
+}
+.scratchpad-bar button:hover,
+.scratchpad-bar button:focus-visible {
+  background: rgba(153, 191, 255, 0.20);
+}

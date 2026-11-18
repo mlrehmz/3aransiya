@@ -76,3 +76,9 @@ This development window handles single-character insertions at separators.
 Multi-character paste remains literal. It uses GTK's default clipboard
 behavior. Automatic conversion before copying and the GNOME top-bar button
 are future work.
+
+The compact bar offers two icons beside the editor. Copy takes the selection,
+or the whole draft if nothing is selected. Hide keeps the draft in the running
+application. A second launch prints a confirmation when it opens that window.
+Drag the preview area to move the bar. Backdrop blur depends on the desktop
+compositor.

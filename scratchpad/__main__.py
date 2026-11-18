@@ -1,11 +1,12 @@
 """Launch the GTK scratchpad with the development predictor."""
 
 from collections import deque
+from pathlib import Path
 import re
 from time import sleep
 
 from .word_range import Replacement, WordRange
-from gi.repository import Gio, GLib, Gtk
+from gi.repository import Gdk, Gio, GLib, Gtk, Pango
 
 from .composition import PredictionRequest
 from .predictor import MockPredictor
@@ -18,19 +19,39 @@ MAX_WAITING = 16
 
 class ScratchpadWindow(Gtk.ApplicationWindow):
     def __init__(self, application):
-        super().__init__(application=application, title='3aransiya', default_width=540,
-                         default_height=280, hide_on_close=True)
+        super().__init__(
+            application=application, title='3aransiya', default_width=820,
+            default_height=72, hide_on_close=True, decorated=False,
+        )
+        self.add_css_class('scratchpad-window')
         self.editor = Gtk.TextView(wrap_mode=Gtk.WrapMode.WORD_CHAR)
         self.editor.set_direction(Gtk.TextDirection.RTL)
+        self.editor.set_justification(Gtk.Justification.RIGHT)
+        self.editor.set_left_margin(10)
+        self.editor.set_right_margin(10)
+        self.editor.set_top_margin(7)
+        self.editor.set_bottom_margin(7)
         self.buffer = self.editor.get_buffer()
         self.buffer.set_enable_undo(True)
-        self.preview = Gtk.Label(label='Mock predictor')
-        self.status = Gtk.Label()
-        scroller = Gtk.ScrolledWindow(vexpand=True)
+        self.preview = Gtk.Label(label='Mock predictor', ellipsize=Pango.EllipsizeMode.END, max_width_chars=20)
+        self.preview.add_css_class('scratchpad-preview')
+        self.status = Gtk.Label(wrap=True, visible=False)
+        self.status.add_css_class('scratchpad-status')
+        self.status.connect('notify::label', lambda label, _: label.set_visible(bool(label.get_text())))
+        scroller = Gtk.ScrolledWindow(hexpand=True, vexpand=True)
+        scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         scroller.set_child(self.editor)
-        layout = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
-        for widget in (scroller, self.preview, self.status):
-            layout.append(widget)
+        handle = Gtk.WindowHandle()
+        handle.set_child(self.preview)
+        self.copy_button = self._icon('edit-copy-symbolic', 'Copy selection or draft', self._copy)
+        self.hide_button = self._icon('window-minimize-symbolic', 'Hide scratchpad', lambda _: self.close())
+        row = Gtk.Box(spacing=6, vexpand=True)
+        for widget in (scroller, handle, self.copy_button, self.hide_button):
+            row.append(widget)
+        layout = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        layout.add_css_class('scratchpad-bar')
+        layout.append(row)
+        layout.append(self.status)
         self.set_child(layout)
 
         self._revision = 0
@@ -54,6 +75,17 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         for action in ('undo', 'redo'):
             self.buffer.connect(action, self._history_start)
             self.buffer.connect_after(action, self._history_end)
+
+    @staticmethod
+    def _icon(name, label, callback):
+        button = Gtk.Button(icon_name=name, tooltip_text=label, valign=Gtk.Align.CENTER)
+        button.update_property([Gtk.AccessibleProperty.LABEL], [label])
+        button.connect('clicked', callback)
+        return button
+
+    def _copy(self, _button):
+        bounds = self.buffer.get_selection_bounds() or self.buffer.get_bounds()
+        self.editor.get_clipboard().set(self.buffer.get_text(*bounds, True))
 
     def _history_start(self, *_):
         self._applying = True
@@ -183,11 +215,30 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
 
 class ScratchpadApplication(Gtk.Application):
     def __init__(self):
-        super().__init__(application_id='io.github.aransiya.Scratchpad')
+        super().__init__(
+            application_id='io.github.aransiya.Scratchpad',
+            flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE,
+        )
         self.window = None
+
+    def do_command_line(self, command_line):
+        if Gdk.Display.get_default() is None:
+            command_line.printerr_literal(
+                '3aransiya could not open a display. Launch it from your desktop session.\n'
+            )
+            return 1
+        self.activate()
+        if command_line.get_is_remote():
+            command_line.print_literal('Opened the running 3aransiya window.\n')
+        return 0
 
     def do_activate(self):
         if self.window is None:
+            provider = Gtk.CssProvider()
+            provider.load_from_path(str(Path(__file__).with_name('scratchpad.css')))
+            Gtk.StyleContext.add_provider_for_display(
+                Gdk.Display.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+            )
             self.window = ScratchpadWindow(self)
             self.add_action(self._quit_action())
             self.set_accels_for_action('app.quit', ['<Primary>q'])
