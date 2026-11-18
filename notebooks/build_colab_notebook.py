@@ -6,7 +6,15 @@ from pathlib import Path
 from textwrap import wrap
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
-files = sorted(Path("model_pilot").glob("*.py")) + [Path("validation_benchmark.py")]
+files = sorted(Path("model_pilot").glob("*.py")) + [
+    Path(name) for name in (
+        "validation_benchmark.py",
+        "scratchpad/__init__.py",
+        "scratchpad/process_predictor.py",
+        "tests/test_training_resume.py",
+        "tests/test_inference_bundle.py",
+    )
+]
 archive = BytesIO()
 with ZipFile(archive, "w", ZIP_DEFLATED) as output:
     for file in files:
@@ -38,6 +46,7 @@ BATCH_SIZE = 128
 SEED = 42
 SAVE_EVERY = 1
 STEPS_THIS_SESSION = None  # e.g. 100 to stop after 100 additional batches per candidate
+RUN_SYNTHETIC_TESTS = True
 """),
     ("inputs", "code", f"""from base64 import b64decode
 from hashlib import sha256
@@ -74,6 +83,24 @@ with ZipFile(BytesIO(source)) as archive:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(archive.read(member))
 """),
+    ("testing_note", "markdown", """## Tests before corpus training
+
+Run the synthetic recovery and bundle tests on CPU. They compare an interrupted run with an uninterrupted run, exercise the fallback after a damaged checkpoint, and check prediction parity and bundle rejection. These tests write only temporary files.
+"""),
+    ("testing", "code", """import os
+import subprocess
+import sys
+
+if RUN_SYNTHETIC_TESTS:
+    for pattern in ("test_training_resume.py", "test_inference_bundle.py"):
+        subprocess.run(
+            [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", pattern],
+            cwd=LOCAL,
+            env={**os.environ, "OMP_NUM_THREADS": "1", "CUDA_VISIBLE_DEVICES": ""},
+            check=True,
+        )
+"""),
+    ("train_note", "markdown", """## Train or resume on T4"""),
     ("train", "code", """import os
 import subprocess
 import sys
@@ -89,9 +116,84 @@ for architecture in CANDIDATES:
         command.extend(["--steps-this-session", str(STEPS_THIS_SESSION)])
     subprocess.run(command, cwd=LOCAL, env={**os.environ, "CUDA_VISIBLE_DEVICES": "0"}, check=True)
 """),
-    ("results", "markdown", """## Results
+    ("validation_note", "markdown", """## Validation on held-out development words
 
-Look under `3aransiya/runs/<RUN_NAME>/<architecture>/` in Drive. Each finished candidate writes `validation.json` and prints the verified bundle directory and manifest SHA-256. Download the complete `bundle-…` directory for Fedora.
+The trainer scores each finished candidate on the same validation occurrences. Strict scores use the retained reference. Variant-aware scores use the twelve pilot spelling equivalences. Missing predictions count as misses in both columns. The locked release test is separate and is reserved for the final selected model.
+"""),
+    ("validation", "code", """import json
+
+completed = {}
+def percent(value):
+    return "n/a" if value is None else f"{value:.2%}"
+
+for architecture in CANDIDATES:
+    run = DRIVE_ROOT / "runs" / RUN_NAME / architecture
+    report_path = run / "validation.json"
+    if not report_path.is_file():
+        print(f"{architecture}: validation pending until training completes")
+        continue
+    report = json.loads(report_path.read_text())
+    completed[architecture] = (run, report["checkpoint_sha256"])
+    print()
+    print(architecture)
+    print(f"{'Slice':<10} {'Words':>8} {'Forms':>8} {'Strict':>9} {'Variants':>9} {'Missing':>8}")
+    for name in ("common", "overall", "unseen"):
+        scores = report["scores"]["slices"][name]
+        strict = percent(scores["strict_accuracy"])
+        variants = percent(scores["variant_accuracy"])
+        print(f"{name:<10} {scores['occurrences']:>8} {scores['distinct_forms']:>8} "
+              f"{strict:>9} {variants:>9} {scores['missing']:>8}")
+"""),
+    ("export_note", "markdown", """## Test the exported bundle
+
+Load each completed bundle via the same local pipe protocol the Fedora app uses. Check that a fixed word produces output and that an overlength word is rejected while the helper stays available. This is an integration smoke test. Use the validation table for development accuracy.
+"""),
+    ("export_test", "code", """for architecture, (run, checkpoint_digest) in completed.items():
+    bundle = run / f"bundle-{checkpoint_digest[:16]}"
+    subprocess.run(
+        [sys.executable, "-c", '''
+import json
+from pathlib import Path
+import sys
+from scratchpad.process_predictor import PredictorError, ProcessPredictor
+
+bundle = Path(sys.argv[1])
+manifest = json.loads((bundle / "manifest.json").read_text())
+if manifest["source_checkpoint_sha256"] != sys.argv[2]:
+    raise ValueError("inference bundle does not match the validation checkpoint")
+helper = ProcessPredictor([sys.executable, "-m", "model_pilot.inference_helper", bundle])
+try:
+    for word in ("salam", "T7", "t7" * 9, "kanchouf", "bghit", "3lach"):
+        try:
+            expected = helper.predict(word)
+        except PredictorError:
+            if helper.closed:
+                raise
+            continue
+        break
+    else:
+        raise RuntimeError("no successful prediction on the fixed fixture")
+    try:
+        helper.predict("t" * 19)
+    except PredictorError:
+        if helper.closed:
+            raise
+    else:
+        raise RuntimeError("helper accepted an overlength word")
+    if helper.predict(word) != expected:
+        raise RuntimeError("prediction changed after a rejected request")
+finally:
+    helper.close()
+''', str(bundle), checkpoint_digest],
+        cwd=LOCAL,
+        env={**os.environ, "CUDA_VISIBLE_DEVICES": ""},
+        check=True,
+    )
+    print(f"{architecture}: exported bundle passed · {bundle}")
+"""),
+    ("results", "markdown", """## Results and restart
+
+Look under `3aransiya/runs/<RUN_NAME>/<architecture>/` in Drive. Download the complete `bundle-…` directory for Fedora. The validation report records the exact checkpoint digest.
 
 Keep the same code, Python, PyTorch, GPU type, and training settings when resuming. A changed runtime or configuration stops with an error to prevent a silent continuation under different assumptions. The two architectures have independent checkpoints.
 """),

@@ -12,8 +12,14 @@ Select a T4 GPU and run all cells. The notebook defaults to two epochs for both 
 - Two alternating, checksummed slots protect against an incomplete newest write. Falling back to the older slot can replay updates after that slot. An abrupt disconnect can also lose a write that Drive has yet to synchronize. Increase `SAVE_EVERY` if Drive I/O dominates, accepting a larger replay window. Set `STEPS_THIS_SESSION` to stop at a saved point after a bounded number of additional steps. [Colab Drive I/O guidance](https://research.google.com/colaboratory/faq.html)
 - A completed candidate skips training on rerun. Its run directory contains the validation report and a versioned bundle with the manifest and CPU weights. Export compares the loaded bundle's greedy output with the final model on a fixed CPU fixture. The [GTK launch command](14-inference-bundle-spec.md#gtk-bundle-launch) accepts the downloaded directory.
 
+## Validation and tests in the notebook
+
+The notebook runs synthetic checkpoint-recovery and bundle tests before corpus training. Set `RUN_SYNTHETIC_TESTS=False` to skip those checks on a subsequent session. Once training finishes, the validation cell displays strict and variant-aware scores, occurrence counts, distinct forms, and missing outputs for common, overall, and unseen words. Candidates with no completed validation report are marked pending.
+
+The export test matches each bundle to its validation checkpoint, starts the same prediction helper used on Fedora, and checks that a rejected overlength request leaves the helper available. The locked release test remains reserved for final evaluation of the selected candidate.
+
 ## Verification
 
-For both candidates, synthetic CPU training resumed mid-epoch and reached the same parameter tensors as an uninterrupted run. Corrupting the newest checkpoint recovered the previous one. Rerunning after completion preserved the checkpoint digest. The notebook's Python cells compiled, and its eight embedded sources matched the repository byte for byte. No Colab job was launched here, so GPU throughput, Drive sync behavior, and trained-bundle quality remain unmeasured.
+For both candidates, synthetic CPU training resumed mid-epoch and reached the same parameter tensors as an uninterrupted run. Corrupting the newest checkpoint recovered the previous one. Rerunning after completion preserved the checkpoint digest. The notebook's Python cells compiled, and its embedded sources matched the repository byte for byte. No Colab job was launched here, so GPU throughput, Drive sync behavior, and trained-bundle quality remain unmeasured.
 
 Regenerate the notebook after changing embedded sources with `python notebooks/build_colab_notebook.py`.
