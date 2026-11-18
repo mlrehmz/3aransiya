@@ -99,7 +99,8 @@ def epoch_batches(rows, schedule, epoch):
     return batches
 
 
-def train(data, architecture, directory, schedule, device, identity, *, save_every=1, step_limit=None):
+def train(data, architecture, directory, schedule, device, identity, *,
+          save_every=1, step_limit=None, on_epoch=None):
     settings = {
         **asdict(schedule), "architecture": architecture, "identity": identity,
         "torch": str(torch.__version__), "python": platform.python_version(),
@@ -125,7 +126,10 @@ def train(data, architecture, directory, schedule, device, identity, *, save_eve
     steps_in_epoch = (len(data.training) + schedule.batch_size - 1) // schedule.batch_size
     total_steps = steps_in_epoch * schedule.epochs
     final_step = total_steps if step_limit is None else min(total_steps, step + step_limit)
+    if on_epoch is not None and step and step % steps_in_epoch == 0:
+        on_epoch(step // steps_in_epoch, model, checkpoints.digest())
     while step < final_step:
+        model.train()
         epoch, first_batch = divmod(step, steps_in_epoch)
         batches = epoch_batches(data.training, schedule, epoch)
         remaining = min(len(batches) - first_batch, final_step - step)
@@ -156,13 +160,14 @@ def train(data, architecture, directory, schedule, device, identity, *, save_eve
             if epoch_finished:
                 print(f"Epoch {epoch + 1}/{schedule.epochs} mean batch loss {loss_sum / loss_count:.5f}", flush=True)
                 loss_sum, loss_count = 0.0, 0
+                if on_epoch is not None:
+                    on_epoch(epoch + 1, model, checkpoints.digest())
             elif step % 100 == 0:
                 print(f"Batch {step}/{total_steps}, loss {value:.5f}", flush=True)
     return model, checkpoints, step, total_steps
 
 
-def validate(model, data, pairs, directory, checkpoint_digest, device, batch_size):
-    path = directory / "validation.json"
+def validate(model, data, pairs, path, checkpoint_digest, device, batch_size):
     if path.exists():
         try:
             report = json.loads(path.read_text())
@@ -216,17 +221,25 @@ def main():
     revision = source_digest()
     args.run.mkdir(parents=True, exist_ok=True)
     device = torch.device("cuda:0")
+    pairs = json.loads(args.word_pairs.read_bytes())["pairs"]
+
+    def epoch_report(epoch):
+        return args.run / f"validation-epoch-{epoch:03d}.json"
+
+    def validate_epoch(epoch, model, digest):
+        scores = validate(model, data, pairs, epoch_report(epoch), digest, device, args.batch_size)
+        print(f"Validation after epoch {epoch}: {json.dumps(scores['slices'])}", flush=True)
+
     model, checkpoints, step, total = train(
         data, args.architecture, args.run, Schedule(args.epochs, args.batch_size, args.seed),
         device, f"{revision}:{ARTIFACT_SHA256}", save_every=args.save_every,
-        step_limit=args.steps_this_session,
+        step_limit=args.steps_this_session, on_epoch=validate_epoch,
     )
     if step < total:
         print(f"Stopped at saved batch {step}/{total}. Rerun to resume.", flush=True)
         return
     checkpoint_digest = checkpoints.digest()
-    pairs = json.loads(args.word_pairs.read_bytes())["pairs"]
-    print(json.dumps(validate(model, data, pairs, args.run, checkpoint_digest, device, args.batch_size), indent=2))
+    atomic_write(args.run / "validation.json", epoch_report(args.epochs).read_bytes())
     torch.set_num_threads(1)
     reference = BundlePredictor(model.cpu().eval(), data.vocabulary)
     destination = args.run / f"bundle-{checkpoint_digest[:16]}"

@@ -44,3 +44,33 @@ class TrainingResumeTest(unittest.TestCase):
                 _, checkpoint, step, _ = train(data, architecture, second, *args)
                 self.assertEqual(step, 6)
                 self.assertEqual(checkpoint.digest(), digest)
+
+    def test_resume_retries_epoch_validation_before_training_more_batches(self):
+        import torch
+
+        from model_pilot.data import DevelopmentData, Vocabulary
+        from model_pilot.train import Schedule, train
+
+        rows = [{"latin": "t", "arabic": "ت"}]
+        data = DevelopmentData(rows, (), Vocabulary.from_training(rows))
+        args = (Schedule(2, 1, 42), torch.device("cpu"), "validation-fixture")
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            attempts = []
+
+            def interrupted(epoch, model, digest):
+                self.assertTrue((root / "checkpoint-1.bin").is_file())
+                attempts.append((epoch, digest))
+                raise InterruptedError("validation interrupted")
+
+            with self.assertRaises(InterruptedError):
+                train(data, "gru_encoder_decoder_v1", root, *args, on_epoch=interrupted)
+
+            def record(epoch, model, digest):
+                attempts.append((epoch, digest))
+
+            _, _, step, _ = train(data, "gru_encoder_decoder_v1", root, *args, on_epoch=record)
+            self.assertEqual(step, 2)
+            self.assertEqual([epoch for epoch, _ in attempts], [1, 1, 2])
+            self.assertEqual(attempts[0], attempts[1])
+            self.assertNotEqual(attempts[1][1], attempts[2][1])

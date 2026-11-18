@@ -22,7 +22,7 @@ with ZipFile(archive, "w", ZIP_DEFLATED) as output:
 source = archive.getvalue()
 encoded = "\n".join(f"    {line!r}" for line in wrap(b64encode(source).decode(), 96))
 cells = [
-    ("intro", "markdown", """# 3aransiya · resumable Colab T4 pilot
+    ("intro", "markdown", """# 3aransiya · resumable six-epoch Colab comparison
 
 Train the GRU encoder–decoder and bidirectional GRU/CTC on the same development corpus. The code is embedded in this notebook. The locked test stays closed.
 
@@ -38,9 +38,9 @@ The default saves after each optimizer step. A full runtime reset clears local f
 CONTENT = Path("/content")
 OUTPUTS = CONTENT / "outputs"
 OUTPUTS.mkdir(parents=True, exist_ok=True)
-RUN_NAME = "t4-pilot-v1"
+RUN_NAME = "t4-comparison-6epoch-v1"
 CANDIDATES = ["gru_encoder_decoder_v1", "bidirectional_gru_ctc_v1"]
-EPOCHS = 2
+EPOCHS = 6
 BATCH_SIZE = 128
 SEED = 42
 SAVE_EVERY = 1
@@ -113,7 +113,7 @@ for architecture in CANDIDATES:
 """),
     ("validation_note", "markdown", """## Validation on held-out development words
 
-The trainer scores each finished candidate on the same validation occurrences. Strict scores use the retained reference. Variant-aware scores use the twelve pilot spelling equivalences. Missing predictions count as misses in both columns. The locked release test is separate and is reserved for the final selected model.
+The trainer scores both candidates after each epoch on the same validation occurrences. Reports are available after a partial run, too. Strict scores use the retained reference. Variant-aware scores use the twelve pilot spelling equivalences. Missing predictions count as misses in both columns. The locked release test is separate and is reserved for the final selected model.
 """),
     ("validation", "code", """import json
 
@@ -123,14 +123,27 @@ def percent(value):
 
 for architecture in CANDIDATES:
     run = OUTPUTS / RUN_NAME / architecture
+    epoch_reports = sorted(run.glob("validation-epoch-*.json"))
+    print()
+    print(architecture)
+    if epoch_reports:
+        print(f"{'Epoch':>5} {'Slice':<10} {'Strict':>9} {'Variants':>9} {'Missing':>8}")
+        for report_path in epoch_reports:
+            epoch = int(report_path.stem.rsplit("-", 1)[1])
+            slices = json.loads(report_path.read_text())["scores"]["slices"]
+            for name in ("common", "overall", "unseen"):
+                scores = slices[name]
+                strict = percent(scores["strict_accuracy"])
+                variants = percent(scores["variant_accuracy"])
+                print(f"{epoch:>5} {name:<10} {strict:>9} {variants:>9} {scores['missing']:>8}")
+
     report_path = run / "validation.json"
     if not report_path.is_file():
-        print(f"{architecture}: validation pending until training completes")
+        print(f"{architecture}: final export pending until training completes")
         continue
     report = json.loads(report_path.read_text())
     completed[architecture] = (run, report["checkpoint_sha256"])
-    print()
-    print(architecture)
+    print("Final validation coverage")
     print(f"{'Slice':<10} {'Words':>8} {'Forms':>8} {'Strict':>9} {'Variants':>9} {'Missing':>8}")
     for name in ("common", "overall", "unseen"):
         scores = report["scores"]["slices"][name]
@@ -188,7 +201,7 @@ finally:
 """),
     ("results", "markdown", """## Results and restart
 
-Look under `/content/outputs/<RUN_NAME>/<architecture>/`. Download the complete `bundle-…` directory for Fedora. The validation report records the exact checkpoint digest.
+Look under `/content/outputs/<RUN_NAME>/<architecture>/`. Download the complete `bundle-…` directory for Fedora. Each epoch report records the exact checkpoint digest. A restart after an interrupted validation step resumes from the completed epoch’s saved weights.
 
 Keep the same code, Python, PyTorch, GPU type, and training settings when resuming. A changed runtime or configuration stops with an error to prevent a silent continuation under different assumptions. The two architectures have independent checkpoints.
 """),
