@@ -114,3 +114,16 @@ The full shift screen removed 532 of the previously accepted grounded sentences,
 There are 109,822 grounded pairs absent from v1 training. These are automatically screened candidates and retain potential reference errors. No new model was trained. The user approved using roughly one million occurrences, so there is no need to trim the pool to 600,000.
 
 **Proposed next action:** Build one local Colab-ready training artifact with the surviving grounded rows and original human training data. Preserve the exact-pair counts and human versus synthetic provenance so training can control how often repeated pairs are sampled. Keep the existing validation data for direct comparison.
+
+## Local v2 training artifact
+
+The [dataset builder](../build_grounded_dataset.py) assembled `data/doda-word-pairs-v2.json` from the verified candidate manifest. It contains **1,170,572 training occurrences**, consisting of 156,219 original human rows and 1,014,353 screened grounded rows. It records source and record identifiers per training occurrence and separate human and grounded counts for each of the **152,520 distinct pairs**. Its 20,081 validation rows exactly equal v1 validation. The artifact contains train and validation only.
+
+The local file is 124,135,191 bytes. SHA-256 `0ce61f1d95a6aa9c4932e883e116b82b009d3411149d8e9e6fce852e88a9121e`. Reopened the output and checked the original human rows, validation equality, and every source-specific pair count. Corpus files remain ignored by Git.
+
+```sh
+python -m build_grounded_dataset data/doda-500k.jsonl data/doda-grounded-candidate.json \
+  data/doda-word-pairs-v1.json data/doda-word-pairs-v2.json
+```
+
+**Proposed next action:** Add a v2 Colab notebook configuration that verifies the new digest and compares both architectures using the same v1 validation slices. Preserve the v1 definitions of common and unseen for comparison, since using v2 training frequency alone would change what those slices measure. The current notebook still expects the v1 filename and checksum.
