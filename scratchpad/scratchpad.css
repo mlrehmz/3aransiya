@@ -4,22 +4,22 @@ window.scratchpad-window {
 }
 .scratchpad-bar {
   padding: 7px;
-  border: 1px solid rgba(181, 202, 231, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 15px;
-  background-image: linear-gradient(115deg, rgba(31, 39, 53, 0.91), rgba(16, 22, 33, 0.88));
+  background-image: linear-gradient(115deg, rgba(28, 28, 28, 0.92), rgba(4, 4, 4, 0.94));
   color: #eaf2ff;
 }
 .scratchpad-bar textview,
 .scratchpad-bar textview text {
   background-color: transparent;
-  color: #adc1dc;
-  caret-color: #b7d8ff;
+  color: #b5b5b5;
+  caret-color: #dedede;
   font-size: 14px;
 }
 .scratchpad-preview {
   padding: 0 8px;
-  font-family: "Noto Naskh Arabic", "Vazirmatn", sans-serif;
-  font-size: 26px;
+  font-family: "PakType Naskh Basic", "Noto Naskh Arabic", sans-serif;
+  font-size: 21px;
   color: #f4f7ff;
 }
 .scratchpad-status {
@@ -31,18 +31,19 @@ window.scratchpad-window {
   padding: 3px;
   border-radius: 9px;
   background: transparent;
-  color: #b6c6df;
+  color: rgba(255, 255, 255, 0.54);
 }
 .scratchpad-bar button.copied {
   color: #9cd9be;
 }
 .scratchpad-bar button:hover,
 .scratchpad-bar button:focus-visible {
-  background: rgba(153, 191, 255, 0.20);
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.95);
 }
 .scratchpad-bar separator {
-  background: rgba(181, 202, 231, 0.13);
+  background: rgba(255, 255, 255, 0.10);
 }
 .scratchpad-preview.empty {
-  color: #92a3ba;
+  color: #9e9e9e;
 }
