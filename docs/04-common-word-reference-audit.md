@@ -48,4 +48,4 @@ Keep the 99% occurrence-weighted target and report single-reference exact match 
 
 Correct or exclude confirmed alignment and reference errors under a written rule, and report every resulting change to coverage and the denominator. Where context genuinely changes the required output, keep the references distinct and report that slice so we can see how the word-only interface handles it. Do not add equivalences in response to locked-test predictions. This proposal changes what qualifies as a match and needs approval before implementation.
 
-**Proposed next action:** Draft the equivalence and exclusion rubric as a short Markdown specification. Use examples from this review to define what counts as the same word, how to handle doubtful forms, and what gets reported before we measure the revised protocol on validation.
+The [draft scoring rubric](05-common-word-scoring-rubric.md) defines the proposed match and exception rules for review.
