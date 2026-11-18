@@ -38,6 +38,30 @@ The approved pilot verified the v1 word-pair artifact and used the [top-500 rank
 
 The two equivalences added **0.48 percentage points** before rounding. All added matches came from the two specified forms. At the same denominator, 99% requires 9,802 matches, leaving this baseline 337 matches short. This is a scoring sensitivity check with fixed predictions. Model performance and the full rubric remain untested.
 
+## Proposed additions for the expanded pilot
+
+The entries below use the [training context review](04-common-word-reference-audit.md#training-context-review). Record IDs refer to the pinned DODa training CSV. Each listed pair would be accepted explicitly in both directions for that Latin form. The six forms contribute ten two-way pairs. They remain proposals for this validation pilot.
+
+| Latin form | Proposed reference pairs | Training evidence and rationale |
+| --- | --- | --- |
+| `f` | ف ↔ في | Records 9887, 9174, 5553, 4021. Both spellings express the same preposition in a following noun phrase. |
+| `imta` | إمتا ↔ امتا | Records 45230, 11520, 7083, 11383. Both spellings express “when.” |
+| `achno` | أشنو ↔ اشنو, أشنو ↔ آشنو, اشنو ↔ آشنو | Records 12467, 13071, 44199, 2218, 6255. All three spellings express “what” in questions. |
+| `hiya` | هي ↔ هيا | Records 47481, 43796, 44075. All three use the feminine pronoun reading. |
+| `lma` | الما ↔ لما, الما ↔ الماء, لما ↔ الماء | Records 25954, 2123, 7989, 24770, 16558, 12256. All three spellings refer to water in these contexts. |
+| `lhadra` | لهدرا ↔ لهادرا | Records 18042, 37614, 30486, 33173. Both spellings refer to talk or speech. Defer الحضرة, whose spelling warrants a second review, and the six other unreviewed targets. |
+
+### Confirmed data errors
+
+| Training record and token | Observed pair | Finding |
+| --- | --- | --- |
+| 3019:6 | `f` → يتسجل | The Arabic verb corresponds to the preceding Latin verb. Token boundaries shift the positional match. |
+| 24425:1 | `achno` → دبا | The Arabic target belongs to the preceding phrase. The intended question word appears at the next Arabic position. |
+| 35740:4 | `hiya` → أكبر | The Arabic adjective corresponds to the following Latin word. The matching pronoun appears one position earlier. |
+| 3952:0 | `kayna` → كاين | The target drops the feminine ending in the source form. |
+
+Flag these for a separate extraction or reference decision. The proposed pilot uses the same predictions, references, and denominator as the two-equivalence run so the effect of the additional pairs can be measured directly. No validation or locked-test contexts were examined for this draft.
+
 ## Next decision
 
-**Proposed, pending approval:** Review the six remaining forms from the training context audit and draft a short list of equivalences with record-level evidence. Flag confirmed data errors separately. Bring the proposed entries back for approval before expanding the validation pilot. This bounds the annotation effort and keeps the decision about accepted spellings grounded in training evidence.
+**Proposed, pending approval:** Run the expanded validation pilot with the ten listed pairs and the two from the prior pilot. Report strict and variant-aware matches, the incremental gain by form, and the remaining gap to 99%. The pilot does not adopt the entries as release policy.
