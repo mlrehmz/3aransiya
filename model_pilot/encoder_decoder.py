@@ -11,6 +11,7 @@ from model_pilot.data import MAX_TARGET_LENGTH, PAD
 class EncoderDecoder(nn.Module):
     def __init__(self, vocabulary):
         super().__init__()
+        self.vocabulary = vocabulary
         self.target_chars = vocabulary.target_chars
         self.bos = len(self.target_chars) + 1
         self.eos = self.bos + 1

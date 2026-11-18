@@ -39,3 +39,13 @@ Vocabulary IDs follow the [shared loader](10-shared-model-data.md). Input paddin
 - Verify local prediction with networking disabled and a fresh helper. Measure cold startup and warm inference separately once real weights exist.
 
 **Proposed next step:** Implement the v1 bundle writer and CPU loader. Test both candidates with synthetic weights through the headless protocol before connecting a model-backed GTK launch.
+
+## Implementation and verification
+
+The [bundle writer and loader](../model_pilot/bundle.py) implement the v1 format. The exporter takes a model already restored by the training code, verifies its architecture and vocabulary, and returns the published manifest digest. It reloads the staged bundle before making it visible at the destination. The [inference helper](../model_pilot/inference_helper.py) loads and warms the model on one CPU thread before accepting requests over local pipes.
+
+Synthetic state round trips returned identical greedy outputs before export and through the helper for both architectures. The checks covered case, embedded digits, an unknown character, maximum-length input, and a recoverable overlength request. Missing weights, a corrupted checksum, an unsupported version, and incompatible tensor shapes were rejected. The corrupted bundle exited before sending readiness. The isolated CPU environment passed 30 tests and skipped four GTK tests. System Python passed 29 tests and skipped five PyTorch tests.
+
+Checkpoint restore from a Kaggle run, trained-weight parity, and model-backed GTK launch remain to be verified.
+
+**Proposed next step:** Add an explicit bundle option to the GTK launcher and smoke-test the normal editor with a synthetic v1 bundle. Check that valid predictions reach the Arabic output row and that a bad bundle preserves the source draft.

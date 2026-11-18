@@ -14,6 +14,7 @@ BLANK = 0
 class GruCtc(nn.Module):
     def __init__(self, vocabulary):
         super().__init__()
+        self.vocabulary = vocabulary
         self.target_chars = vocabulary.target_chars
         self.classes = len(self.target_chars) + 1
         self.input_embedding = nn.Embedding(len(vocabulary.input_chars) + 2, 32, padding_idx=PAD)
