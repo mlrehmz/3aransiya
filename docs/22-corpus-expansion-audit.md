@@ -99,3 +99,18 @@ The rule requires two adjacent, distinct Latin forms that each occur at least 20
 For example, row 286343 splits the name `fatimezahra` into فاطمة الزهراء, shifting several following words. A later boundary change offsets the name split, so sentence token counts still agree. Row 304516 attaches the Latin conjunction and following Arabic token differently, and several positions then align one word away. In contrast with the earlier single-reference flag, the reviewed matches show a consistent shift across multiple words. This small sample does not establish recall or the precision of the rule on the full pool.
 
 **Proposed next action:** Apply this shift check to the full grounded pool and build a reproducible candidate manifest. Report surviving counts, exact pair deduplication, conflicting references, and sentence overlap with the existing splits. Choose a 600,000-occurrence training mix only after reviewing those counts. No corpus labels or splits changed in this evaluation.
+
+## Grounded candidate manifest after shift screening
+
+The [manifest builder](../grounded_manifest.py) verified the source and v1 input checksums. It recorded the accepted one-based source line numbers in the ignored local file `data/doda-grounded-candidate.json`. The manifest SHA-256 is `6b5650ec43ac7eb385addd3d98b658fe44225d76d21c33376b1b326c27c887bd`.
+
+The full shift screen removed 532 of the previously accepted grounded sentences, leaving 108,944. Seven human sentence-key overlaps were skipped, all from train. No exact normalized matches with validation or test were detected. This check does not cover all near-duplicate sentences.
+
+| Candidate pool | Occurrences | Distinct Latin–Arabic pairs | Distinct Latin forms | Forms with multiple Arabic references |
+| --- | ---: | ---: | ---: | ---: |
+| Grounded after screening | 1,014,353 | 119,415 | 98,173 | 13,808 |
+| Grounded plus v1 train | 1,170,572 | 152,520 | 123,775 | 18,537 |
+
+There are 109,822 grounded pairs absent from v1 training. These are automatically screened candidates and retain potential reference errors. No new model was trained. The user approved using roughly one million occurrences, so there is no need to trim the pool to 600,000.
+
+**Proposed next action:** Build one local Colab-ready training artifact with the surviving grounded rows and original human training data. Preserve the exact-pair counts and human versus synthetic provenance so training can control how often repeated pairs are sampled. Keep the existing validation data for direct comparison.
