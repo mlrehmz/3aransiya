@@ -15,7 +15,7 @@ export default class ScratchpadExtension extends Extension {
         const button = new St.Button({
             accessible_name: 'Open 3aransiya',
             child: new St.Icon({
-                icon_name: 'accessories-text-editor-symbolic',
+                gicon: new Gio.FileIcon({file: this.dir.get_child('3aransiya-symbolic.svg')}),
                 style_class: 'system-status-icon',
             }),
         });

@@ -24,7 +24,7 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
     def __init__(self, application, *, helper_command=None):
         super().__init__(
             application=application, title='3aransiya', default_width=820,
-            default_height=112, hide_on_close=True, decorated=False,
+            default_height=148, hide_on_close=True, decorated=False,
         )
         self.add_css_class('scratchpad-window')
         self.editor = Gtk.TextView(wrap_mode=Gtk.WrapMode.WORD_CHAR)
@@ -38,7 +38,14 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         self.buffer.set_enable_undo(True)
         self.editor.set_tooltip_text('Arabizi input · Ctrl+S starts over')
         self.editor.update_property([Gtk.AccessibleProperty.LABEL], ['Arabizi input'])
-        self.preview = Gtk.Label(wrap=True, xalign=0, justify=Gtk.Justification.RIGHT)
+        # GTK mirrors leading alignment in an RTL text view.
+        self.preview = Gtk.TextView(
+            editable=False, cursor_visible=False, focusable=False,
+            wrap_mode=Gtk.WrapMode.WORD_CHAR, justification=Gtk.Justification.LEFT,
+            right_margin=10, left_margin=10, top_margin=3, bottom_margin=3,
+        )
+        self.output_buffer = self.preview.get_buffer()
+        self._shown_output = None
         self.preview.set_direction(Gtk.TextDirection.RTL)
         self.preview.add_css_class('scratchpad-preview')
         self.preview.set_tooltip_text('Arabic output')
@@ -49,7 +56,7 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         scroller = Gtk.ScrolledWindow(hexpand=True, vexpand=True, min_content_height=29)
         scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         scroller.set_child(self.editor)
-        output = Gtk.ScrolledWindow(hexpand=True, vexpand=True, min_content_height=44)
+        output = Gtk.ScrolledWindow(hexpand=True, vexpand=True, min_content_height=57)
         output.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         output.set_child(self.preview)
         handle = Gtk.WindowHandle(hexpand=True, vexpand=True)
@@ -219,7 +226,16 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
             self.preview.remove_css_class('empty')
         else:
             self.preview.add_css_class('empty')
-        self.preview.set_text(output or 'العربية')
+        if output != self._shown_output:
+            self._shown_output = output
+            self.output_buffer.set_text(output or 'العربية')
+        # Follow the corresponding line even when it is still empty.
+        source_cursor = self.buffer.get_iter_at_mark(self.buffer.get_insert())
+        line = source_cursor.get_line()
+        found, target = self.output_buffer.get_iter_at_line(line)
+        if found:
+            self.output_buffer.place_cursor(target)
+            self.preview.scroll_mark_onscreen(self.output_buffer.get_insert())
 
     def start_over(self):
         self._discard_requests()

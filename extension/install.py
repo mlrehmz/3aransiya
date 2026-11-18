@@ -12,7 +12,7 @@ def main():
     data_home = Path(os.environ.get('XDG_DATA_HOME') or Path.home() / '.local/share')
     target = data_home / 'gnome-shell/extensions/scratchpad@3aransiya'
     target.mkdir(parents=True, exist_ok=True)
-    for name in ('metadata.json', 'extension.js'):
+    for name in ('metadata.json', 'extension.js', '3aransiya-symbolic.svg'):
         shutil.copyfile(source / name, target / name)
     launcher = target / 'launch-scratchpad'
     launcher.write_text(

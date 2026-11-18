@@ -17,12 +17,13 @@ window.scratchpad-window {
   color: #dadada;
   caret-color: #dedede;
   font-family: "Kalam", "Cursive", sans-serif;
-  font-size: 17px;
+  font-size: 19px;
 }
-.scratchpad-preview {
-  padding: 0 8px;
+.scratchpad-bar .scratchpad-preview,
+.scratchpad-bar .scratchpad-preview text {
   font-family: "PakType Naskh Basic", "Noto Naskh Arabic", sans-serif;
   font-size: 21px;
+  font-weight: bold;
   color: #f4f7ff;
 }
 .scratchpad-status {
@@ -47,6 +48,7 @@ window.scratchpad-window {
 .scratchpad-bar separator {
   background: rgba(255, 255, 255, 0.10);
 }
-.scratchpad-preview.empty {
+.scratchpad-bar .scratchpad-preview.empty,
+.scratchpad-bar .scratchpad-preview.empty text {
   color: #9e9e9e;
 }
