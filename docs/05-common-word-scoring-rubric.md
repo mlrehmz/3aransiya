@@ -26,6 +26,18 @@ Replay each eligible word occurrence once. The denominator includes every eligib
 
 Report strict single-reference exact match on the same eligible occurrences, the number of additional matches due to alternatives, distinct common forms covered, per-form accuracy, and the context-dependent slice when present. Report separator preservation separately. Continue to report the other metrics from the project checklist.
 
+## Two-equivalence validation pilot
+
+The approved pilot verified the v1 word-pair artifact and used the [top-500 ranking and training-majority baseline](04-common-word-reference-audit.md#method). Each form had one fixed prediction, with Unicode order breaking training frequency ties. Both scores used the same 9,901 validation occurrences. Only the two listed equivalences were enabled, in both directions for the specified Latin form. No corrections or exclusions were applied and the locked test remained closed.
+
+| Scope | Fixed prediction | Strict matches | Variant-aware matches | Added matches |
+| --- | --- | ---: | ---: | ---: |
+| `m3a` | مع | 47 / 86 | 86 / 86 | 39 |
+| `kayna` | كاينة | 15 / 24 | 24 / 24 | 9 |
+| All common occurrences | Training majority per form | 9,417 / 9,901 (95.11%) | 9,465 / 9,901 (95.60%) | 48 |
+
+The two equivalences added **0.48 percentage points** before rounding. All added matches came from the two specified forms. At the same denominator, 99% requires 9,802 matches, leaving this baseline 337 matches short. This is a scoring sensitivity check with fixed predictions. Model performance and the full rubric remain untested.
+
 ## Next decision
 
-**Proposed, pending approval:** Run a small validation pilot using only explicitly approved, training-supported alternatives. Compare strict and variant-aware agreement on identical occurrences and count newly accepted pairs. Use the result to decide how much annotation is warranted before freezing the release scorer. The pilot will leave the locked test closed.
+**Proposed, pending approval:** Review the six remaining forms from the training context audit and draft a short list of equivalences with record-level evidence. Flag confirmed data errors separately. Bring the proposed entries back for approval before expanding the validation pilot. This bounds the annotation effort and keeps the decision about accepted spellings grounded in training evidence.
