@@ -1,6 +1,7 @@
 """Launch the GTK scratchpad with the development predictor."""
 
 from collections import deque
+import os
 from pathlib import Path
 import re
 
@@ -8,7 +9,7 @@ from .word_range import WordRange
 from gi.repository import Gdk, Gio, GLib, Gtk, Pango
 
 from .composition import PredictionRequest
-from .predictor import MockPredictor
+from .predictor import MockPredictor, SyntheticHelperPredictor
 from .worker import PredictionWorker
 
 LATIN_TOKEN = re.compile(r'[A-Za-z0-9]+')
@@ -18,7 +19,7 @@ MAX_WAITING = 16
 
 
 class ScratchpadWindow(Gtk.ApplicationWindow):
-    def __init__(self, application):
+    def __init__(self, application, *, synthetic_helper=False):
         super().__init__(
             application=application, title='3aransiya', default_width=820,
             default_height=112, hide_on_close=True, decorated=False,
@@ -75,7 +76,14 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         self._refresh_source = 0
         self._copy_feedback = 0
         self._render_rows()
-        self.worker = PredictionWorker(MockPredictor().predict, self._schedule_drain)
+        if synthetic_helper:
+            python = Path(__file__).resolve().parents[1] / '.venv/bin/python'
+            predictor = SyntheticHelperPredictor(python)
+            self.worker = PredictionWorker(
+                predictor.predict, self._schedule_drain, on_close=predictor.close
+            )
+        else:
+            self.worker = PredictionWorker(MockPredictor().predict, self._schedule_drain)
         self.buffer.connect_after('insert-text', self._inserted)
         self.buffer.connect('changed', self._schedule_refresh)
         self.buffer.connect('mark-set', self._schedule_refresh)
@@ -270,12 +278,16 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
 
 
 class ScratchpadApplication(Gtk.Application):
-    def __init__(self):
+    def __init__(self, *, synthetic_helper=False):
         super().__init__(
-            application_id='io.github.aransiya.Scratchpad',
+            application_id=(
+                'io.github.aransiya.Scratchpad.Synthetic'
+                if synthetic_helper else 'io.github.aransiya.Scratchpad'
+            ),
             flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE,
         )
         self.window = None
+        self._synthetic_helper = synthetic_helper
 
     def do_command_line(self, command_line):
         if Gdk.Display.get_default() is None:
@@ -295,7 +307,7 @@ class ScratchpadApplication(Gtk.Application):
             Gtk.StyleContext.add_provider_for_display(
                 Gdk.Display.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
             )
-            self.window = ScratchpadWindow(self)
+            self.window = ScratchpadWindow(self, synthetic_helper=self._synthetic_helper)
             self.add_action(self._quit_action())
             start_over = Gio.SimpleAction.new('start-over', None)
             start_over.connect('activate', lambda *_: self.window.start_over())
@@ -317,4 +329,10 @@ class ScratchpadApplication(Gtk.Application):
 
 
 if __name__ == '__main__':
-    raise SystemExit(ScratchpadApplication().run())
+    synthetic_helper = os.environ.get('ARANSIYA_SYNTHETIC_HELPER') == '1'
+    application = ScratchpadApplication(synthetic_helper=synthetic_helper)
+    status = application.run()
+    if synthetic_helper and application.window is not None:
+        # Wait after the GTK loop so helper cleanup cannot block the editor.
+        application.window.worker.join(17)
+    raise SystemExit(status)

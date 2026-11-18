@@ -55,9 +55,13 @@ class ProcessPredictor:
                     raise PredictorError("predictor exited without a response")
                 self._buffer.extend(chunk)
 
+    @property
+    def closed(self):
+        return self._process.stdin.closed
+
     def predict(self, word):
         process = self._process
-        if process.stdin.closed:
+        if self.closed:
             raise PredictorError("predictor is closed")
         message = json.dumps(word).encode("ascii") + b"\n"
         if len(message) > _MAX_LINE:

@@ -23,10 +23,12 @@ class PredictionWorker:
     """
 
     def __init__(
-        self, predict: Callable[[str], str], on_ready: Callable[[], None]
+        self, predict: Callable[[str], str], on_ready: Callable[[], None],
+        *, on_close: Callable[[], None] | None = None,
     ) -> None:
         self._predict = predict
         self._on_ready = on_ready
+        self._on_close = on_close
         self._condition = Condition()
         self._closed = False
         self._preview: PredictionRequest | None = None
@@ -78,6 +80,13 @@ class PredictionWorker:
         )
 
     def _run(self) -> None:
+        try:
+            self._run_requests()
+        finally:
+            if self._on_close is not None:
+                self._on_close()
+
+    def _run_requests(self) -> None:
         while True:
             with self._condition:
                 self._condition.wait_for(self._can_run)
