@@ -36,7 +36,9 @@ window.scratchpad-window {
   border: 0;
   box-shadow: none;
   background: rgba(0, 0, 0, 0.27);
-  color: rgba(255, 255, 255, 0.54);
+  color: #fff;
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 17px;
 }
 .scratchpad-bar button.scratchpad-copy {
   border-radius: 5px;
@@ -45,12 +47,12 @@ window.scratchpad-window {
   border-radius: 50%;
 }
 .scratchpad-bar button.copied {
-  color: #9cd9be;
+  background: rgba(255, 255, 255, 0.16);
 }
 .scratchpad-bar button:hover,
 .scratchpad-bar button:focus-visible {
   background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.95);
+  color: #fff;
 }
 .scratchpad-bar separator {
   background: rgba(255, 255, 255, 0.10);

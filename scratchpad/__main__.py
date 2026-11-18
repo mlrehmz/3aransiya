@@ -18,8 +18,8 @@ LATIN_TOKEN = re.compile(r'[A-Za-z0-9]+')
 WORD = re.compile(r'[A-Za-z0-9]+\Z')
 MAX_WORD = 128
 MAX_WAITING = 16
-COPY_ICON = 'media-playback-stop-symbolic'
-HIDE_ICON = 'media-record-symbolic'
+COPY_ICON = '□'
+HIDE_ICON = '○'
 
 
 class ScratchpadWindow(Gtk.ApplicationWindow):
@@ -105,7 +105,7 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
 
     @staticmethod
     def _icon(name, label, callback):
-        button = Gtk.Button(icon_name=name, tooltip_text=label, valign=Gtk.Align.CENTER)
+        button = Gtk.Button(label=name, tooltip_text=label, valign=Gtk.Align.CENTER)
         button.update_property([Gtk.AccessibleProperty.LABEL], [label])
         button.connect('clicked', callback)
         return button
@@ -118,13 +118,13 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         self.editor.get_clipboard().set(text)
         if self._copy_feedback:
             GLib.source_remove(self._copy_feedback)
-        self.copy_button.set_icon_name('object-select-symbolic')
+        self.copy_button.set_label('✓')
         self.copy_button.add_css_class('copied')
         self._copy_feedback = GLib.timeout_add(1100, self._reset_copy_feedback)
 
     def _reset_copy_feedback(self):
         self._copy_feedback = 0
-        self.copy_button.set_icon_name(COPY_ICON)
+        self.copy_button.set_label(COPY_ICON)
         self.copy_button.remove_css_class('copied')
         return GLib.SOURCE_REMOVE
 
