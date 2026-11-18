@@ -45,3 +45,27 @@ Reviewed 30 candidate occurrences per group in sentence context. Many were plaus
 The grounded sample yields 4.383 screened occurrences per source row, above the 1.964 needed for the occurrence target. This is a count of candidates. It does not establish accepted yield or a total of 600,000 distinct pairs. Unique counts from a small sample cannot be scaled linearly because later sentences reuse words. V1 itself has 156,219 training occurrences, 42,698 distinct Latin–Arabic pairs, and 37,365 distinct Latin forms.
 
 **Proposed next action:** Scan the full grounded subset and count candidates both before and after deduplication by `(Latin, Arabic)`. Report the full counts, overlap, and conflicting references before selecting a training dataset. Retain occurrence counts as metadata so we can compare uniform sampling over distinct pairs with controlled replay of common forms later. The corpus remains local and no training ran.
+
+## Full grounded scan
+
+Applied the sample screen to all 226,000 grounded rows of the verified object. Deduplicated full sentences by the combined lowercased Latin and Arabic keys, and excluded matches against either normalized human sentence key. Counted word occurrences before deduplicating exact, case-sensitive `(Latin, Arabic)` pairs.
+
+| Measure | Count |
+| --- | ---: |
+| Grounded rows passing the screen | 109,476 |
+| Rejected for unequal whitespace counts | 78,760 |
+| Rejected for non-single-token segments | 35,509 |
+| Rejected for incompatible scripts or number anchors | 2,195 |
+| Duplicate grounded sentences skipped | 53 |
+| Human sentence overlaps skipped | 7 |
+| Grounded candidate word occurrences | 1,025,464 |
+| Distinct grounded Latin–Arabic pairs | 124,712 |
+| Distinct pairs absent from v1 training | 115,108 |
+| Distinct grounded Latin forms | 98,984 |
+| Grounded Latin forms with multiple Arabic references | 14,591 |
+| Combined v1 and grounded candidate occurrences | 1,181,683 |
+| Combined v1 and grounded distinct pairs | 157,806 |
+
+The grounded pool exceeds the occurrence target before additional alignment quality checks. Even the combined pool remains far below 600,000 distinct pairs. Conflicting references can be valid spelling variants or alignment errors. This scan counted them without choosing a target. It excluded full-sentence matches by the existing keys. Near-duplicate overlap and indirect variant links still require review before using the pool as training data.
+
+**Proposed next action:** Test a small alignment quality filter against manually reviewed pairs and measure the resulting yield. Use the grounded pool first since it already has enough candidate occurrences to support filtering. Keep exact pair counts and occurrence weights available for the sampling decision.
