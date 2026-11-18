@@ -1,0 +1,17 @@
+# Local credentials
+.env
+.env.*
+!.env.example
+kaggle.json
+
+# Local corpora, model files, and run outputs
+/data/
+/corpora/
+/checkpoints/
+/runs/
+/outputs/
+
+# Python environments and caches
+.venv/
+__pycache__/
+.pytest_cache/
