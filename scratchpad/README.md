@@ -57,3 +57,22 @@ artificial test output, not a Darija prediction. `MockPredictor(fail=True)` rais
 an error for failure-path checks. Tests deliver results in a chosen order to
 simulate delayed predictions without timers. Replace `predict(word) -> str` with
 the real model adapter when its runtime and bundle are available.
+
+## Launch the mock editor
+
+On Fedora with GTK 4 and PyGObject installed, run this from the repository root:
+
+```sh
+python -m scratchpad
+```
+
+Type a word using ASCII Latin letters and Arabizi digits. The mock preview
+appears below the editor. Type a separator to replace the source word with
+artificial output after a short delay. Standalone digits stay as typed. The
+close button hides the window and keeps its draft in memory. Run the launcher
+again to reopen it, or use Ctrl+Q to quit.
+
+This development window handles single-character insertions at separators.
+Multi-character paste remains literal. It uses GTK's default clipboard
+behavior. Automatic conversion before copying and the GNOME top-bar button
+are future work.
