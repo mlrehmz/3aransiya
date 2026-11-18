@@ -18,8 +18,8 @@ LATIN_TOKEN = re.compile(r'[A-Za-z0-9]+')
 WORD = re.compile(r'[A-Za-z0-9]+\Z')
 MAX_WORD = 128
 MAX_WAITING = 16
-COPY_ICON = '□'
-HIDE_ICON = '○'
+COPY_ICON = 'copy.svg'
+HIDE_ICON = 'hide.svg'
 
 
 class ScratchpadWindow(Gtk.ApplicationWindow):
@@ -105,10 +105,15 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
 
     @staticmethod
     def _icon(name, label, callback):
-        button = Gtk.Button(label=name, tooltip_text=label, valign=Gtk.Align.CENTER)
+        button = Gtk.Button(tooltip_text=label, valign=Gtk.Align.CENTER)
+        button.set_child(ScratchpadWindow._glyph(name))
         button.update_property([Gtk.AccessibleProperty.LABEL], [label])
         button.connect('clicked', callback)
         return button
+
+    @staticmethod
+    def _glyph(name):
+        return Gtk.Image.new_from_file(str(Path(__file__).with_name('icons') / name))
 
     def _copy(self, _button):
         bounds = self.buffer.get_selection_bounds() or self.buffer.get_bounds()
@@ -124,7 +129,7 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
 
     def _reset_copy_feedback(self):
         self._copy_feedback = 0
-        self.copy_button.set_label(COPY_ICON)
+        self.copy_button.set_child(self._glyph(COPY_ICON))
         self.copy_button.remove_css_class('copied')
         return GLib.SOURCE_REMOVE
 
