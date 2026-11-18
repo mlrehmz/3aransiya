@@ -39,6 +39,10 @@ Version 2 explicitly requested the T4 accelerator again. Kaggle still reported t
 
 The notebook executed with a CPU-only PyTorch build. The image and driver visibility need correction or confirmation before changing Python packages. The observations do not establish whether a physical GPU was assigned to the job. Only synthetic inputs were used.
 
+## Explicit GPU image request
+
+Version 3 requested Kaggle's documented GPU image, `gcr.io/kaggle-gpu-images/python`, and the `NvidiaTeslaT4` accelerator through MCP. Kaggle accepted the save, but the saved metadata retained the same prior image digest. The diagnostic completed and again reported Python 3.13.18, PyTorch 2.11.0+cpu, unavailable `nvidia-smi`, and zero visible CUDA devices. This establishes that the explicit image request did not change the effective environment for this run. The root cause remains open. [Kaggle GPU image repository](https://github.com/Kaggle/docker-python) · [Private notebook]([private notebook URL removed])
+
 ## Next decision
 
-**Proposed, pending approval:** Explicitly switch the same private notebook to Kaggle's GPU image and select T4 ×2 in the runtime settings, then rerun the synthetic diagnostic. Verify the saved version reports a GPU image and the diagnostic sees a T4 before considering any package installation. [Kaggle GPU image documentation](https://github.com/Kaggle/docker-python)
+**Proposed, pending approval:** Use Kaggle's documented editor workflow. Inspect **Session options** for the Docker image and accelerator, then check the accelerator in **Save Version → Advanced Settings**, since Save & Run All starts a separate session. If an authenticated editor is available, choose T4 ×2 and run the diagnostic with synthetic inputs. Keep the notebook private with internet disabled. [Kaggle Notebook settings](https://www.kaggle.com/docs/notebooks) · [Kaggle batch accelerator settings](https://www.kaggle.com/product-feedback/161328)
