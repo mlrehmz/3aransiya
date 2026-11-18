@@ -30,17 +30,18 @@ window.scratchpad-window {
   color: #ffdfaa;
 }
 .scratchpad-bar button {
-  min-width: 26px;
-  min-height: 26px;
+  min-width: 23px;
+  min-height: 23px;
   padding: 0;
   border: 0;
   box-shadow: none;
   background: rgba(0, 0, 0, 0.27);
   color: #fff;
   font-family: "DejaVu Sans", sans-serif;
-  font-size: 17px;
+  font-size: 15px;
 }
 .scratchpad-bar button.scratchpad-copy {
+  margin-left: 4px;
   border-radius: 5px;
 }
 .scratchpad-bar button.scratchpad-hide {
