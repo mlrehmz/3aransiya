@@ -3,18 +3,21 @@ window.scratchpad-window {
   backdrop-filter: blur(20px);
 }
 .scratchpad-bar {
+  margin: 9px;
   padding: 7px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 15px;
-  background-image: linear-gradient(115deg, rgba(28, 28, 28, 0.92), rgba(4, 4, 4, 0.94));
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  border-radius: 22px;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.40), inset 0 0 5px rgba(255, 255, 255, 0.13);
+  background-image: linear-gradient(115deg, rgba(28, 28, 28, 0.67), rgba(4, 4, 4, 0.79));
   color: #eaf2ff;
 }
 .scratchpad-bar textview,
 .scratchpad-bar textview text {
   background-color: transparent;
-  color: #b5b5b5;
+  color: #dadada;
   caret-color: #dedede;
-  font-size: 14px;
+  font-family: "Kalam", "Cursive", sans-serif;
+  font-size: 17px;
 }
 .scratchpad-preview {
   padding: 0 8px;

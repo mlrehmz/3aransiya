@@ -107,3 +107,6 @@ The Arabizi row keeps the source text after you press Space. The upper row
 shows the Arabic preview and committed output. The Copy icon copies the
 Arabic output for the selected range, or for the whole draft when nothing is
 selected. Use Ctrl+S to start over and Ctrl+Z to restore that draft.
+
+The Arabizi row uses [Kalam](https://github.com/google/fonts/tree/main/ofl/kalam)
+when installed. GTK uses a fallback font on systems without it.
