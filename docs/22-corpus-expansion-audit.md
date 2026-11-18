@@ -69,3 +69,18 @@ Applied the sample screen to all 226,000 grounded rows of the verified object. D
 The grounded pool exceeds the occurrence target before additional alignment quality checks. Even the combined pool remains far below 600,000 distinct pairs. Conflicting references can be valid spelling variants or alignment errors. This scan counted them without choosing a target. It excluded full-sentence matches by the existing keys. Near-duplicate overlap and indirect variant links still require review before using the pool as training data.
 
 **Proposed next action:** Test a small alignment quality filter against manually reviewed pairs and measure the resulting yield. Use the grounded pool first since it already has enough candidate occurrences to support filtering. Keep exact pair counts and occurrence weights available for the sampling decision.
+
+## Frequent-word reference check
+
+Tested one proposed quality rule on the same 1,000-row grounded sample. It flags a candidate when the exact Latin form appears at least 20 times in v1 training and the candidate Arabic spelling never appeared with that form. The rule flagged 67 of 4,383 candidates (1.53%).
+
+Using seed 42, drew 16 flagged and 16 unflagged occurrences without replacement, after drawing the grounded sentence sample. Reviewed each candidate in context. “Plausible” allows a spelling variant that preserves the word and grammatical content. “Unclear” includes cases where the intended interpretation needs another reviewer.
+
+| Review group | Plausible | Clear mismatch | Unclear |
+| --- | ---: | ---: | ---: |
+| Flagged | 11 | 4 | 1 |
+| Unflagged | 16 | 0 | 0 |
+
+Flags caught shifted `f` → الدراري, added negation in `ghadi` → غاديش, an added preposition in `l3am` → للعام, and a register change from `hadi` to هذه. They also caught plausible spellings such as `yallah` → يلاه, `hit` → حيت, and `akhor` → اخر. The `mochkil` → مشكلة example was unclear because the reference changes the word's form and gender. The sample deliberately oversampled flagged pairs. It cannot establish population precision, false-negative rate, or recall.
+
+**Decision proposed:** Keep the rule as a review flag. Treating it as an automatic filter would discard 11 plausible pairs in the 16 reviewed flags. Try a sentence-level alignment check that requires multiple known word pairs to support a consistent shift before rejecting a sentence. Measure it on a fresh sample so the examples that motivated it do not determine its score. No corpus labels or splits changed in this check.
