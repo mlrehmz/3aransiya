@@ -106,4 +106,4 @@ To remove it, run `gnome-extensions uninstall scratchpad@3aransiya`.
 The Arabizi row keeps the source text after you press Space. The upper row
 shows the Arabic preview and committed output. The Copy icon copies the
 Arabic output for the selected range, or for the whole draft when nothing is
-selected. Use Ctrl+Shift+N to start over and Ctrl+Z to restore that draft.
+selected. Use Ctrl+S to start over and Ctrl+Z to restore that draft.
