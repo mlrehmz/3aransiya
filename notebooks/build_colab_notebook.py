@@ -26,19 +26,18 @@ cells = [
 
 Train the GRU encoder–decoder and bidirectional GRU/CTC on the same development corpus. The code is embedded in this notebook. The locked test stays closed.
 
-1. Put the prepared `doda-word-pairs-v1.json` in the `3aransiya` folder in your private Google Drive.
+1. Upload `doda-word-pairs-v1.json` through Colab’s Files panel so it is at `/content/doda-word-pairs-v1.json`.
 2. In Colab choose **Runtime → Change runtime type → T4 GPU**, then run all cells.
-3. After a disconnect, select the same runtime, reconnect Drive, and rerun with the same run name and training settings. Completed candidates skip training. Run one session per run folder.
+3. Outputs go to `/content/outputs/`. Download anything you want to keep before the runtime resets. Rerunning in the same runtime resumes from its newest valid local checkpoint.
 
-The default saves after each optimizer step. If Drive writes become a bottleneck, increase `SAVE_EVERY` and accept replay of unsaved steps. The two checkpoint slots survive typical interrupted writes. Drive can still lose writes it hasn't synchronized.
+The default saves after each optimizer step. A full runtime reset clears local files. To resume on a fresh runtime, upload the dataset and restore the saved `outputs/` folder before rerunning.
 
-[Colab runtime and Drive limits](https://research.google.com/colaboratory/faq.html)
+[Colab runtime limits](https://research.google.com/colaboratory/faq.html)
 """),
     ("settings", "code", """from pathlib import Path
-from google.colab import drive
-
-drive.mount("/content/drive")
-DRIVE_ROOT = Path("/content/drive/MyDrive/3aransiya")
+CONTENT = Path("/content")
+OUTPUTS = CONTENT / "outputs"
+OUTPUTS.mkdir(parents=True, exist_ok=True)
 RUN_NAME = "t4-pilot-v1"
 CANDIDATES = ["gru_encoder_decoder_v1", "bidirectional_gru_ctc_v1"]
 EPOCHS = 2
@@ -62,15 +61,11 @@ print(torch.__version__, torch.version.cuda, torch.cuda.get_device_name(0))
 EXPECTED_DATA = "842ba2460f0d4219cb90a41cca0cdc079d18fd1146d6756a9562833c9f2fbfbb"
 LOCAL = Path("/content/3aransiya-pilot")
 LOCAL.mkdir(exist_ok=True)
-WORD_PAIRS = LOCAL / "doda-word-pairs-v1.json"
-if not WORD_PAIRS.exists() or sha256(WORD_PAIRS.read_bytes()).hexdigest() != EXPECTED_DATA:
-    prepared = DRIVE_ROOT / WORD_PAIRS.name
-    if not prepared.is_file():
-        raise FileNotFoundError(f"Put the prepared development artifact at {{prepared}}")
-    content = prepared.read_bytes()
-    if sha256(content).hexdigest() != EXPECTED_DATA:
-        raise ValueError("The prepared word-pair artifact has the wrong checksum")
-    WORD_PAIRS.write_bytes(content)
+WORD_PAIRS = CONTENT / "doda-word-pairs-v1.json"
+if not WORD_PAIRS.is_file():
+    raise FileNotFoundError(f"Upload the prepared development artifact to {{WORD_PAIRS}}")
+if sha256(WORD_PAIRS.read_bytes()).hexdigest() != EXPECTED_DATA:
+    raise ValueError("The prepared word-pair artifact has the wrong checksum")
 
 # Embedded project source snapshot for this notebook.
 source = b64decode(
@@ -106,7 +101,7 @@ import subprocess
 import sys
 
 for architecture in CANDIDATES:
-    run = DRIVE_ROOT / "runs" / RUN_NAME / architecture
+    run = OUTPUTS / RUN_NAME / architecture
     command = [
         sys.executable, "-m", "model_pilot.train", str(WORD_PAIRS), str(run),
         "--architecture", architecture, "--epochs", str(EPOCHS),
@@ -127,7 +122,7 @@ def percent(value):
     return "n/a" if value is None else f"{value:.2%}"
 
 for architecture in CANDIDATES:
-    run = DRIVE_ROOT / "runs" / RUN_NAME / architecture
+    run = OUTPUTS / RUN_NAME / architecture
     report_path = run / "validation.json"
     if not report_path.is_file():
         print(f"{architecture}: validation pending until training completes")
@@ -193,7 +188,7 @@ finally:
 """),
     ("results", "markdown", """## Results and restart
 
-Look under `3aransiya/runs/<RUN_NAME>/<architecture>/` in Drive. Download the complete `bundle-…` directory for Fedora. The validation report records the exact checkpoint digest.
+Look under `/content/outputs/<RUN_NAME>/<architecture>/`. Download the complete `bundle-…` directory for Fedora. The validation report records the exact checkpoint digest.
 
 Keep the same code, Python, PyTorch, GPU type, and training settings when resuming. A changed runtime or configuration stops with an error to prevent a silent continuation under different assumptions. The two architectures have independent checkpoints.
 """),
