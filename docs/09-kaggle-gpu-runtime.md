@@ -24,6 +24,21 @@ The authorized synthetic preflight ran as version 1 of a private notebook. Kaggl
 
 The job ended with status `ERROR`. Its log shows a Python 3.13 package path and the preflight message `expected one visible CUDA device, found 0`. The check stopped before running the GPU kernels or writing a runtime report. Notebook settings confirm the request, while the log establishes only what PyTorch could see. The underlying cause remains open.
 
+## Diagnostic run
+
+Version 2 explicitly requested the T4 accelerator again. Kaggle still reported the same image digest, GPU enabled, and `NvidiaTeslaT4`. The notebook completed and wrote the diagnostic report.
+
+| Check | Observed |
+| --- | --- |
+| Python | 3.13.18 |
+| PyTorch | 2.11.0+cpu |
+| PyTorch CUDA build | None |
+| Initial CUDA and NVIDIA device masks | Unset |
+| `nvidia-smi` | Unavailable |
+| CUDA devices visible to PyTorch | 0 before and after setting the mask |
+
+The notebook executed with a CPU-only PyTorch build. The image and driver visibility need correction or confirmation before changing Python packages. The observations do not establish whether a physical GPU was assigned to the job. Only synthetic inputs were used.
+
 ## Next decision
 
-**Proposed, pending approval:** Run one diagnostic version in the same private notebook. Log the preexisting device mask, the GPUs and driver visible to `nvidia-smi`, and the PyTorch version and CUDA build before the one-device check. This should distinguish missing GPU provisioning from a device visibility or PyTorch runtime mismatch. Use synthetic tensors only, with no package installation or corpus transfer.
+**Proposed, pending approval:** Explicitly switch the same private notebook to Kaggle's GPU image and select T4 ×2 in the runtime settings, then rerun the synthetic diagnostic. Verify the saved version reports a GPU image and the diagnostic sees a T4 before considering any package installation. [Kaggle GPU image documentation](https://github.com/Kaggle/docker-python)
