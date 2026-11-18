@@ -82,3 +82,23 @@ or the whole draft if nothing is selected. Hide keeps the draft in the running
 application. A second launch prints a confirmation when it opens that window.
 Drag the preview area to move the bar. Backdrop blur depends on the desktop
 compositor.
+
+## GNOME top-bar control
+
+On GNOME Shell 51, install the extension from this checkout with the same
+Python you use to run the app:
+
+```sh
+python extension/install.py
+gnome-extensions enable scratchpad@3aransiya
+```
+
+If GNOME does not discover the extension immediately, log out and back in
+before enabling it. The top-bar icon opens the scratchpad near the bottom of
+the active monitor on first launch. If it is already running, the icon moves
+it to the active workspace and focuses it. The inline Hide icon minimizes
+the window and keeps the draft and window position.
+
+Rerun the installer after moving the checkout or changing Python. After
+updating the extension, log out and back in to reload its JavaScript.
+To remove it, run `gnome-extensions uninstall scratchpad@3aransiya`.

@@ -44,7 +44,7 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         handle = Gtk.WindowHandle()
         handle.set_child(self.preview)
         self.copy_button = self._icon('edit-copy-symbolic', 'Copy selection or draft', self._copy)
-        self.hide_button = self._icon('window-minimize-symbolic', 'Hide scratchpad', lambda _: self.close())
+        self.hide_button = self._icon('window-minimize-symbolic', 'Hide scratchpad', lambda _: self.minimize())
         row = Gtk.Box(spacing=6, vexpand=True)
         for widget in (scroller, handle, self.copy_button, self.hide_button):
             row.append(widget)
