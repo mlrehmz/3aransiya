@@ -84,3 +84,18 @@ Using seed 42, drew 16 flagged and 16 unflagged occurrences without replacement,
 Flags caught shifted `f` → الدراري, added negation in `ghadi` → غاديش, an added preposition in `l3am` → للعام, and a register change from `hadi` to هذه. They also caught plausible spellings such as `yallah` → يلاه, `hit` → حيت, and `akhor` → اخر. The `mochkil` → مشكلة example was unclear because the reference changes the word's form and gender. The sample deliberately oversampled flagged pairs. It cannot establish population precision, false-negative rate, or recall.
 
 **Decision proposed:** Keep the rule as a review flag. Treating it as an automatic filter would discard 11 plausible pairs in the 16 reviewed flags. Try a sentence-level alignment check that requires multiple known word pairs to support a consistent shift before rejecting a sentence. Measure it on a fresh sample so the examples that motivated it do not determine its score. No corpus labels or splits changed in this check.
+
+## Sentence-level shift check
+
+Drew a new sample of 3,000 grounded rows with seed 43. Used the same whitespace, script, length, and human-overlap checks. Of the 1,488 sentences that passed the row screen, 12 (0.81%) were flagged for a possible one-position shift.
+
+The rule requires two adjacent, distinct Latin forms that each occur at least 20 times in v1 training. Their current positional references must be unseen for those forms, and both references one position away in the same direction must be attested at least twice in v1. The rule flags the sentence for exclusion review and does not attempt to repair its alignments.
+
+| Reviewed sentences | Confirmed boundary shift | No clear boundary shift |
+| --- | ---: | ---: |
+| All flagged | 12 | 0 |
+| Random sample of unflagged | 0 | 16 |
+
+For example, row 286343 splits the name `fatimezahra` into فاطمة الزهراء, shifting several following words. A later boundary change offsets the name split, so sentence token counts still agree. Row 304516 attaches the Latin conjunction and following Arabic token differently, and several positions then align one word away. In contrast with the earlier single-reference flag, the reviewed matches show a consistent shift across multiple words. This small sample does not establish recall or the precision of the rule on the full pool.
+
+**Proposed next action:** Apply this shift check to the full grounded pool and build a reproducible candidate manifest. Report surviving counts, exact pair deduplication, conflicting references, and sentence overlap with the existing splits. Choose a 600,000-occurrence training mix only after reviewing those counts. No corpus labels or splits changed in this evaluation.
