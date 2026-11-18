@@ -24,7 +24,7 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
     def __init__(self, application, *, helper_command=None):
         super().__init__(
             application=application, title='3aransiya', default_width=820,
-            default_height=148, hide_on_close=True, decorated=False,
+            default_height=101, hide_on_close=True, decorated=False,
         )
         self.add_css_class('scratchpad-window')
         self.editor = Gtk.TextView(wrap_mode=Gtk.WrapMode.WORD_CHAR)
@@ -32,8 +32,8 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         self.editor.set_justification(Gtk.Justification.LEFT)
         self.editor.set_left_margin(10)
         self.editor.set_right_margin(10)
-        self.editor.set_top_margin(3)
-        self.editor.set_bottom_margin(3)
+        self.editor.set_top_margin(1)
+        self.editor.set_bottom_margin(1)
         self.buffer = self.editor.get_buffer()
         self.buffer.set_enable_undo(True)
         self.editor.set_tooltip_text('Arabizi input · Ctrl+S starts over')
@@ -42,7 +42,7 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         self.preview = Gtk.TextView(
             editable=False, cursor_visible=False, focusable=False,
             wrap_mode=Gtk.WrapMode.WORD_CHAR, justification=Gtk.Justification.LEFT,
-            right_margin=10, left_margin=10, top_margin=3, bottom_margin=3,
+            right_margin=10, left_margin=10, top_margin=1, bottom_margin=1,
         )
         self.output_buffer = self.preview.get_buffer()
         self._shown_output = None
@@ -54,20 +54,22 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         self.status.add_css_class('scratchpad-status')
         self.status.connect('notify::label', lambda label, _: label.set_visible(bool(label.get_text())))
         scroller = Gtk.ScrolledWindow(hexpand=True, vexpand=True, min_content_height=29)
-        scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.EXTERNAL)
         scroller.set_child(self.editor)
-        output = Gtk.ScrolledWindow(hexpand=True, vexpand=True, min_content_height=57)
-        output.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        output = Gtk.ScrolledWindow(hexpand=True, vexpand=True, min_content_height=35)
+        output.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.EXTERNAL)
         output.set_child(self.preview)
         handle = Gtk.WindowHandle(hexpand=True, vexpand=True)
         handle.set_child(output)
         self.copy_button = self._icon('edit-copy-symbolic', 'Copy selection or draft', self._copy)
         self.hide_button = self._icon('window-minimize-symbolic', 'Hide scratchpad', lambda _: self.minimize())
-        row = Gtk.Box(spacing=5)
+        self.copy_button.add_css_class('scratchpad-copy')
+        self.hide_button.add_css_class('scratchpad-hide')
+        row = Gtk.Box(spacing=6)
         row.set_direction(Gtk.TextDirection.LTR)
         for widget in (self.copy_button, self.hide_button, handle):
             row.append(widget)
-        layout = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        layout = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         layout.add_css_class('scratchpad-bar')
         layout.append(row)
         layout.append(Gtk.Separator())

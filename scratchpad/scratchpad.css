@@ -1,10 +1,10 @@
 window.scratchpad-window {
   background-color: transparent;
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(13px);
 }
 .scratchpad-bar {
   margin: 9px;
-  padding: 7px;
+  padding: 5px 8px;
   border: 1px solid rgba(255, 255, 255, 0.86);
   border-radius: 22px;
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.40), inset 0 0 5px rgba(255, 255, 255, 0.13);
@@ -30,12 +30,19 @@ window.scratchpad-window {
   color: #ffdfaa;
 }
 .scratchpad-bar button {
-  min-width: 28px;
-  min-height: 28px;
-  padding: 3px;
-  border-radius: 9px;
-  background: transparent;
+  min-width: 26px;
+  min-height: 26px;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: rgba(0, 0, 0, 0.27);
   color: rgba(255, 255, 255, 0.54);
+}
+.scratchpad-bar button.scratchpad-copy {
+  border-radius: 5px;
+}
+.scratchpad-bar button.scratchpad-hide {
+  border-radius: 50%;
 }
 .scratchpad-bar button.copied {
   color: #9cd9be;
