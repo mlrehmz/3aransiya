@@ -4,14 +4,13 @@ from collections import deque
 from pathlib import Path
 import re
 
-from .word_range import Replacement, WordRange
+from .word_range import WordRange
 from gi.repository import Gdk, Gio, GLib, Gtk, Pango
 
 from .composition import PredictionRequest
 from .predictor import MockPredictor
 from .worker import PredictionWorker
 
-ARABIC = re.compile(r'[\u0620-\u063f\u0641-\u065f\u066e-\u06d3\u0750-\u077f\u0870-\u08ff]+(?:[0-9]+)?')
 LATIN_TOKEN = re.compile(r'[A-Za-z0-9]+')
 WORD = re.compile(r'[A-Za-z0-9]+\Z')
 MAX_WORD = 128
@@ -34,13 +33,13 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         self.editor.set_bottom_margin(3)
         self.buffer = self.editor.get_buffer()
         self.buffer.set_enable_undo(True)
+        self.editor.set_tooltip_text('Arabizi input · Ctrl+Shift+N starts over')
         self.editor.update_property([Gtk.AccessibleProperty.LABEL], ['Arabizi input'])
-        self._source_tag = self.buffer.create_tag('converted', invisible=True)
         self.preview = Gtk.Label(wrap=True, xalign=0, justify=Gtk.Justification.RIGHT)
         self.preview.set_direction(Gtk.TextDirection.RTL)
         self.preview.add_css_class('scratchpad-preview')
+        self.preview.set_tooltip_text('Arabic output')
         self._preview_output = None
-        self._tagged_draft = None
         self.status = Gtk.Label(wrap=True, visible=False)
         self.status.add_css_class('scratchpad-status')
         self.status.connect('notify::label', lambda label, _: label.set_visible(bool(label.get_text())))
@@ -70,11 +69,12 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         self._preview_request = None
         self._pending = None
         self._waiting = deque()
-        self._deferred = None
+        self._translations = {}
         self._applying = False
         self._closed = False
         self._refresh_source = 0
         self._copy_feedback = 0
+        self._render_rows()
         self.worker = PredictionWorker(MockPredictor().predict, self._schedule_drain)
         self.buffer.connect_after('insert-text', self._inserted)
         self.buffer.connect('changed', self._schedule_refresh)
@@ -92,7 +92,7 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
 
     def _copy(self, _button):
         bounds = self.buffer.get_selection_bounds() or self.buffer.get_bounds()
-        text = self.buffer.get_text(*bounds, True)
+        text = self._arabic_text(*bounds)
         if not text:
             return
         self.editor.get_clipboard().set(text)
@@ -160,7 +160,7 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         self._start_next()
 
     def _start_next(self):
-        if self._pending or self._deferred or not self._waiting:
+        if self._pending or not self._waiting:
             return
         self._pending = self._waiting.popleft()
         request, marked = self._pending
@@ -173,11 +173,6 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         self._refresh_source = 0
         if self._closed:
             return False
-        if self._deferred is not None:
-            marked, output = self._deferred
-            if self._replace(marked, output) is not Replacement.DEFERRED:
-                self._deferred = None
-                self._start_next()
         cursor = self.buffer.get_iter_at_mark(self.buffer.get_insert())
         candidate = self._word_before(cursor)
         if self.buffer.get_has_selection() or candidate is None or candidate[1].isdecimal():
@@ -191,35 +186,51 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         self._render_rows()
         return False
 
-    def _render_rows(self):
-        start, end = self.buffer.get_bounds()
+    def _arabic_text(self, start, end):
         draft = self.buffer.get_text(start, end, True)
-        if draft != self._tagged_draft:
-            self._tagged_draft = draft
-            self.buffer.remove_tag(self._source_tag, start, end)
-            for span in ARABIC.finditer(draft):
-                first, last = span.span()
-                self.buffer.apply_tag(self._source_tag, self.buffer.get_iter_at_offset(first),
-                                      self.buffer.get_iter_at_offset(last))
+        offset = start.get_offset()
         cursor = self.buffer.get_iter_at_mark(self.buffer.get_insert()).get_offset()
 
         def render_token(match):
             token = match[0]
             if token.isdecimal():
                 return token
+            if token in self._translations:
+                return self._translations[token]
             if (self._preview_output and self._preview_request
-                    and match.end() == cursor and token == self._preview_request.word):
+                    and offset + match.end() == cursor and token == self._preview_request.word):
                 return self._preview_output
             return ''
 
-        self.preview.set_text(LATIN_TOKEN.sub(render_token, draft))
+        return LATIN_TOKEN.sub(render_token, draft)
 
-    def _replace(self, marked, output):
-        self._applying = True
+    def _render_rows(self):
+        output = self._arabic_text(*self.buffer.get_bounds())
+        if output:
+            self.preview.remove_css_class('empty')
+        else:
+            self.preview.add_css_class('empty')
+        self.preview.set_text(output or 'العربية')
+
+    def start_over(self):
+        self._discard_requests()
+        self.status.set_text('')
+        self.buffer.begin_user_action()
         try:
-            return marked.replace(output)
+            self.buffer.delete(*self.buffer.get_bounds())
         finally:
-            self._applying = False
+            self.buffer.end_user_action()
+        self._render_rows()
+        self.editor.grab_focus()
+
+    def _discard_requests(self):
+        self._preview_request = None
+        self._preview_output = None
+        if self._pending:
+            self._pending[1].close()
+        for _, marked in self._waiting:
+            marked.close()
+        self._waiting.clear()
 
     def _drain(self):
         if self._closed:
@@ -230,11 +241,12 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         if self._pending is not None and result.request is self._pending[0]:
             _, marked = self._pending
             self._pending = None
-            if result.failed:
-                marked.close()
-                self.status.set_text('Prediction failed. Your text was kept.')
-            elif self._replace(marked, result.output) is Replacement.DEFERRED:
-                self._deferred = marked, result.output
+            if marked.is_current():
+                if result.failed:
+                    self.status.set_text('Prediction failed. Your text was kept.')
+                else:
+                    self._translations[result.request.word] = result.output
+            marked.close()
             self._start_next()
             self._schedule_refresh()
         elif result.request is self._preview_request and not result.failed:
@@ -254,13 +266,7 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         if self._refresh_source:
             GLib.source_remove(self._refresh_source)
             self._refresh_source = 0
-        if self._pending:
-            self._pending[1].close()
-        if self._deferred:
-            self._deferred[0].close()
-        for _, marked in self._waiting:
-            marked.close()
-        self._waiting.clear()
+        self._discard_requests()
 
 
 class ScratchpadApplication(Gtk.Application):
@@ -291,6 +297,10 @@ class ScratchpadApplication(Gtk.Application):
             )
             self.window = ScratchpadWindow(self)
             self.add_action(self._quit_action())
+            start_over = Gio.SimpleAction.new('start-over', None)
+            start_over.connect('activate', lambda *_: self.window.start_over())
+            self.add_action(start_over)
+            self.set_accels_for_action('app.start-over', ['<Primary><Shift>n'])
             self.set_accels_for_action('app.quit', ['<Primary>q'])
         self.window.present()
         self.window.editor.grab_focus()

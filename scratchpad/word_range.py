@@ -36,6 +36,12 @@ class WordRange:
             buffer.connect('delete-range', self._before_delete),
         )
 
+    def is_current(self) -> bool:
+        if self._closed:
+            return False
+        start, end = self._bounds()
+        return start.compare(end) < 0 and self._buffer.get_text(start, end, True) == self._source
+
     def replace(self, text: str) -> Replacement:
         if self._closed:
             return Replacement.STALE

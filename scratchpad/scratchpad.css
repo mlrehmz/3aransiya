@@ -43,3 +43,6 @@ window.scratchpad-window {
 .scratchpad-bar separator {
   background: rgba(181, 202, 231, 0.13);
 }
+.scratchpad-preview.empty {
+  color: #92a3ba;
+}
