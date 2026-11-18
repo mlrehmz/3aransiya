@@ -18,6 +18,12 @@ Run [kaggle_preflight.py](../kaggle_preflight.py) as a fresh Python process in t
 
 On the Fedora CPU environment, the shared tensor checks passed with finite gradients and CTC loss **1.647918**. Running the GPU entry point there failed as expected with zero visible CUDA devices. All 13 discovered repository tests passed. The [local CPU import warning](08-fedora-cpu-runtime.md#verified-local-environment) about optional NumPy was present again. GPU execution and the live Kaggle version metadata remain unverified.
 
+## Live Kaggle result
+
+The authorized synthetic preflight ran as version 1 of a private notebook. Kaggle reported `enable_gpu=true`, `machine_shape=NvidiaTeslaT4`, and internet disabled. The notebook had no data sources. Kaggle reported image digest `sha256:0717e81990be591f8c5f98f033d29ab23e9ffde057e5b3a6bd4371f93969e962`. [Private notebook]([private notebook URL removed])
+
+The job ended with status `ERROR`. Its log shows a Python 3.13 package path and the preflight message `expected one visible CUDA device, found 0`. The check stopped before running the GPU kernels or writing a runtime report. Notebook settings confirm the request, while the log establishes only what PyTorch could see. The underlying cause remains open.
+
 ## Next decision
 
-**Proposed, pending approval:** Run the preflight once in a private Kaggle T4 session using synthetic tensors only. Capture its JSON report to verify the effective runtime before deciding whether a separate PyTorch install is needed. The [DODa upload terms](01-doda-data-exploration.md#decisions-and-open-questions) remain unresolved. No Kaggle job or corpus transfer occurred during this step.
+**Proposed, pending approval:** Run one diagnostic version in the same private notebook. Log the preexisting device mask, the GPUs and driver visible to `nvidia-smi`, and the PyTorch version and CUDA build before the one-device check. This should distinguish missing GPU provisioning from a device visibility or PyTorch runtime mismatch. Use synthetic tensors only, with no package installation or corpus transfer.
