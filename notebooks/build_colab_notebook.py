@@ -1,3 +1,4 @@
+import argparse
 from base64 import b64encode
 from hashlib import sha256
 from io import BytesIO
@@ -5,6 +6,10 @@ import json
 from pathlib import Path
 from textwrap import wrap
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
+
+parser = argparse.ArgumentParser(description="Build a Colab training notebook")
+parser.add_argument("--v2", action="store_true", help="build the expanded dataset notebook")
+options = parser.parse_args()
 
 files = sorted(Path("model_pilot").glob("*.py")) + [
     Path(name) for name in (
@@ -131,7 +136,7 @@ for architecture in CANDIDATES:
         for report_path in epoch_reports:
             epoch = int(report_path.stem.rsplit("-", 1)[1])
             slices = json.loads(report_path.read_text())["scores"]["slices"]
-            for name in ("common", "overall", "unseen"):
+            for name in slices:
                 scores = slices[name]
                 strict = percent(scores["strict_accuracy"])
                 variants = percent(scores["variant_accuracy"])
@@ -145,8 +150,7 @@ for architecture in CANDIDATES:
     completed[architecture] = (run, report["checkpoint_sha256"])
     print("Final validation coverage")
     print(f"{'Slice':<10} {'Words':>8} {'Forms':>8} {'Strict':>9} {'Variants':>9} {'Missing':>8}")
-    for name in ("common", "overall", "unseen"):
-        scores = report["scores"]["slices"][name]
+    for name, scores in report["scores"]["slices"].items():
         strict = percent(scores["strict_accuracy"])
         variants = percent(scores["variant_accuracy"])
         print(f"{name:<10} {scores['occurrences']:>8} {scores['distinct_forms']:>8} "
@@ -208,6 +212,14 @@ Keep the same code, Python, PyTorch, GPU type, and training settings when resumi
 ]
 notebook_cells = []
 for id_, kind, body in cells:
+    if options.v2:
+        body = (body.replace("resumable six-epoch Colab comparison", "expanded v2 Colab comparison")
+                .replace("doda-word-pairs-v1.json", "doda-word-pairs-v2.json")
+                .replace("842ba2460f0d4219cb90a41cca0cdc079d18fd1146d6756a9562833c9f2fbfbb",
+                         "0ce61f1d95a6aa9c4932e883e116b82b009d3411149d8e9e6fce852e88a9121e")
+                .replace("t4-comparison-6epoch-v1", "t4-v2-one-pass")
+                .replace("EPOCHS = 6", "EPOCHS = 1")
+                .replace('"--epochs", str(EPOCHS)', '"--dataset-version", "v2", "--epochs", str(EPOCHS)'))
     cell = {"id": id_, "cell_type": kind, "metadata": {}, "source": body.splitlines(keepends=True)}
     if kind == "code":
         compile(body, f"colab:{id_}", "exec")
@@ -221,4 +233,5 @@ notebook = {
         "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
     },
 }
-Path("notebooks/colab_t4_pilot.ipynb").write_text(json.dumps(notebook, indent=2, ensure_ascii=False) + "\n")
+name = "colab_t4_v2.ipynb" if options.v2 else "colab_t4_pilot.ipynb"
+Path("notebooks", name).write_text(json.dumps(notebook, indent=2, ensure_ascii=False) + "\n")

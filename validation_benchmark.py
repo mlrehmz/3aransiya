@@ -8,6 +8,7 @@ from pathlib import Path
 import unicodedata
 
 ARTIFACT_SHA256 = "842ba2460f0d4219cb90a41cca0cdc079d18fd1146d6756a9562833c9f2fbfbb"
+V2_ARTIFACT_SHA256 = "0ce61f1d95a6aa9c4932e883e116b82b009d3411149d8e9e6fce852e88a9121e"
 PILOT_SPELLINGS = {
     "m3a": {"مع", "معا"},
     "kayna": {"كاينة", "كاينا"},
@@ -28,24 +29,30 @@ def normalize_arabic(text):
     )
 
 
-def benchmark(pairs, predictions=None):
+def benchmark(pairs, predictions=None, *, preserve_v1_slices=False):
     training = defaultdict(Counter)
+    original_forms = Counter()
     for pair in pairs["train"]:
-        training[pair["latin"]][pair["arabic"]] += 1
-    common_order = sorted(training, key=lambda word: (-training[word].total(), word))[:500]
-    common = set(common_order)
+        word = pair["latin"]
+        training[word][pair["arabic"]] += 1
+        if not preserve_v1_slices or pair.get("source") == "doda_human":
+            original_forms[word] += 1
+    common = set(sorted(original_forms, key=lambda word: (-original_forms[word], word))[:500])
     if predictions is None:
         predictions = {
             word: min(counts, key=lambda ref: (-counts[ref], ref))
             for word, counts in training.items()
         }
+    slice_names = (
+        (*SLICES, "newly_seen_in_v2", "still_unseen_in_v2") if preserve_v1_slices else SLICES
+    )
 
     predictions = {word: normalize_arabic(output) for word, output in predictions.items()}
     counts = {
         name: dict(occurrences=0, strict_correct=0, variant_correct=0, missing=0)
-        for name in SLICES
+        for name in slice_names
     }
-    covered = {name: set() for name in SLICES}
+    covered = {name: set() for name in slice_names}
     for pair in pairs["validation"]:
         word, reference = pair["latin"], pair["arabic"]
         output = predictions.get(word)
@@ -55,8 +62,10 @@ def benchmark(pairs, predictions=None):
         slices = ["overall"]
         if word in common:
             slices.append("common")
-        if word not in training:
+        if word not in original_forms:
             slices.append("unseen")
+            if preserve_v1_slices:
+                slices.append("newly_seen_in_v2" if word in training else "still_unseen_in_v2")
         for name in slices:
             result = counts[name]
             result["occurrences"] += 1

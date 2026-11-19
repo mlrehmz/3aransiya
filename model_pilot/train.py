@@ -15,8 +15,8 @@ import tempfile
 import torch
 
 from model_pilot.bundle import ARCHITECTURES, BundlePredictor, load_bundle, write_bundle
-from model_pilot.data import collate, load_development_data
-from validation_benchmark import ARTIFACT_SHA256, benchmark
+from model_pilot.data import DATASETS, collate, load_development_data
+from validation_benchmark import benchmark
 
 
 def atomic_write(path, data):
@@ -167,7 +167,7 @@ def train(data, architecture, directory, schedule, device, identity, *,
     return model, checkpoints, step, total_steps
 
 
-def validate(model, data, pairs, path, checkpoint_digest, device, batch_size):
+def validate(model, data, pairs, path, checkpoint_digest, device, batch_size, *, preserve_v1_slices=False):
     if path.exists():
         try:
             report = json.loads(path.read_text())
@@ -185,7 +185,7 @@ def validate(model, data, pairs, path, checkpoint_digest, device, batch_size):
         lengths = torch.tensor([len(ids) for ids in encoded])
         outputs = model.greedy(inputs.to(device), lengths)
         predictions.update((word, output) for word, output in zip(chunk, outputs) if output is not None)
-    scores = benchmark(pairs, predictions)
+    scores = benchmark(pairs, predictions, preserve_v1_slices=preserve_v1_slices)
     atomic_write(path, (json.dumps({"checkpoint_sha256": checkpoint_digest, "scores": scores}, indent=2) + "\n").encode())
     return scores
 
@@ -203,6 +203,7 @@ def main():
     parser.add_argument("word_pairs", type=Path)
     parser.add_argument("run", type=Path)
     parser.add_argument("--architecture", choices=ARCHITECTURES, required=True)
+    parser.add_argument("--dataset-version", choices=DATASETS, default="v1")
     parser.add_argument("--epochs", type=int, default=2)
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--seed", type=int, default=42)
@@ -217,22 +218,27 @@ def main():
             or "T4" not in torch.cuda.get_device_name(0).split()):
         parser.error("a CUDA-enabled T4 is required; select the T4 runtime in Colab")
     print(f"Training on {torch.cuda.get_device_name(0)} with PyTorch {torch.__version__}", flush=True)
-    data = load_development_data(args.word_pairs)
+    artifact_sha256 = DATASETS[args.dataset_version]
+    data = load_development_data(args.word_pairs, version=args.dataset_version)
+    print(f"Training occurrences: {len(data.training):,}", flush=True)
     revision = source_digest()
     args.run.mkdir(parents=True, exist_ok=True)
     device = torch.device("cuda:0")
-    pairs = json.loads(args.word_pairs.read_bytes())["pairs"]
+    pairs = {"train": data.training, "validation": data.validation}
 
     def epoch_report(epoch):
         return args.run / f"validation-epoch-{epoch:03d}.json"
 
     def validate_epoch(epoch, model, digest):
-        scores = validate(model, data, pairs, epoch_report(epoch), digest, device, args.batch_size)
+        scores = validate(
+            model, data, pairs, epoch_report(epoch), digest, device, args.batch_size,
+            preserve_v1_slices=args.dataset_version == "v2",
+        )
         print(f"Validation after epoch {epoch}: {json.dumps(scores['slices'])}", flush=True)
 
     model, checkpoints, step, total = train(
         data, args.architecture, args.run, Schedule(args.epochs, args.batch_size, args.seed),
-        device, f"{revision}:{ARTIFACT_SHA256}", save_every=args.save_every,
+        device, f"{revision}:{artifact_sha256}", save_every=args.save_every,
         step_limit=args.steps_this_session, on_epoch=validate_epoch,
     )
     if step < total:
@@ -246,7 +252,7 @@ def main():
     if not destination.exists():
         digest = write_bundle(
             destination, args.architecture, data.vocabulary, model,
-            source_checkpoint_sha256=checkpoint_digest, word_pairs_sha256=ARTIFACT_SHA256,
+            source_checkpoint_sha256=checkpoint_digest, word_pairs_sha256=artifact_sha256,
             source_revision=revision,
         )
     else:

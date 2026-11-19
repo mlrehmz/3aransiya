@@ -8,13 +8,15 @@ import unicodedata
 import torch
 from torch.nn.utils.rnn import pad_sequence
 
-from validation_benchmark import ARTIFACT_SHA256
+from validation_benchmark import ARTIFACT_SHA256, V2_ARTIFACT_SHA256
 
 PAD = 0
 UNK = 1
 MAX_INPUT_LENGTH = 18
 MAX_TARGET_LENGTH = 17
 CTC_EXPANSION = 9
+DATASETS = {"v1": ARTIFACT_SHA256, "v2": V2_ARTIFACT_SHA256}
+V2_MISALIGNED = {(265842, 7), (419166, 13)}
 
 
 @dataclass(frozen=True)
@@ -96,16 +98,25 @@ class DevelopmentData:
     training: list
     validation_forms: tuple[str, ...]
     vocabulary: Vocabulary
+    validation: tuple = ()
 
 
-def load_development_data(path):
+def load_development_data(path, *, version="v1"):
     """Verify the artifact and preflight both candidates on every training pair."""
     data = path.read_bytes()
-    if sha256(data).hexdigest() != ARTIFACT_SHA256:
-        raise ValueError("word-pair artifact does not match the v1 digest")
+    if sha256(data).hexdigest() != DATASETS[version]:
+        raise ValueError(f"word-pair artifact does not match the {version} digest")
 
     pairs = json.loads(data)["pairs"]
     training = pairs["train"]
+    if version == "v2":
+        training = [pair for pair in training if not (
+            pair["source"] == "doda_grounded" and (pair["record"], pair["token"]) in V2_MISALIGNED
+        )]
+        removed = len(pairs["train"]) - len(training)
+        if removed != len(V2_MISALIGNED):
+            raise ValueError("unexpected v2 alignment exclusion count")
+        print(f"Excluded {removed} reviewed boundary errors from both models", flush=True)
     for pair in training:
         try:
             check_pair(len(pair["latin"]), pair["arabic"], CTC_EXPANSION)
@@ -115,4 +126,5 @@ def load_development_data(path):
         training=training,
         validation_forms=tuple(sorted({pair["latin"] for pair in pairs["validation"]})),
         vocabulary=Vocabulary.from_training(training),
+        validation=tuple(pairs["validation"]),
     )
