@@ -18,18 +18,22 @@ from model_pilot.data import load_development_data
 from validation_benchmark import benchmark
 
 
-def human_references(rows):
+def training_references(rows, source, minimum, agreement, excluded=()):
     counts = defaultdict(Counter)
     for row in rows:
-        if row["source"] == "doda_human":
+        if row["source"] == source and row["latin"] not in excluded:
             counts[row["latin"]][row["arabic"]] += 1
     lexicon = {}
     for word, alternatives in counts.items():
         winner = min(alternatives, key=lambda ref: (-alternatives[ref], ref))
         support = alternatives[winner]
-        if support >= 3 and support * 10 >= alternatives.total() * 9:
+        if support >= minimum and support * 100 >= alternatives.total() * agreement:
             lexicon[word] = winner
     return set(counts), lexicon
+
+
+def human_references(rows):
+    return training_references(rows, "doda_human", 3, 90)
 
 
 def routed_predict(word, encoder, ctc, human_forms, lexicon):
@@ -123,6 +127,7 @@ def main():
     parser.add_argument("encoder", type=Path)
     parser.add_argument("ctc", type=Path)
     parser.add_argument("--weighted", type=Path)
+    parser.add_argument("--fine-tuned", type=Path)
     args = parser.parse_args()
 
     torch.set_num_threads(1)
@@ -138,6 +143,16 @@ def main():
         "routed": partial(routed_predict, encoder=encoder, ctc=ctc,
                           human_forms=human_forms, lexicon=lexicon),
     }
+    _, grounded = training_references(data.training, "doda_grounded", 5, 90, human_forms)
+    enriched_lexicon = lexicon | grounded
+    candidates["routed_grounded"] = partial(routed_predict, encoder=encoder, ctc=ctc,
+                                            human_forms=human_forms, lexicon=enriched_lexicon)
+    if args.fine_tuned:
+        fine_tuned = load_bundle(args.fine_tuned).predict
+        candidates["fine_tuned_routed"] = partial(
+            routed_predict, encoder=fine_tuned, ctc=ctc, human_forms=human_forms,
+            lexicon=enriched_lexicon,
+        )
     candidates["routed_shortened"] = lambda word: candidates["routed"](shorten(word))
     if args.weighted:
         weighted = load_bundle(args.weighted).predict
