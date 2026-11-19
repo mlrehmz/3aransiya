@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "3aransiya"
+version = "0.1.0"
+description = "Offline Arabizi scratchpad and Darija transliteration experiments"
+requires-python = ">=3.14"
+license = "MIT"
+dependencies = ["torch==2.11.0+cpu"]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[tool.setuptools.packages.find]
+include = ["scratchpad*", "model_pilot*", "sentence_pilot*", "project_tools*"]

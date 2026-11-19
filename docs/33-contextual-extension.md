@@ -23,7 +23,7 @@ The full draft now renders as:
 Build the [base model](31-release.md#reproduce-the-model) first. The contextual builder verifies the human training pairs, writes a new profile, and verifies the context checksum. The source checkout includes the original symbolic **ض** icon outline.
 
 ```sh
-.venv/bin/python build_context_profile.py outputs/3aransiya-release \
+.venv/bin/python -m project_tools.build_context_profile outputs/3aransiya-release \
   data/doda-word-pairs-v1.json outputs/3aransiya-contextual
 /usr/bin/python extension/install.py --profile outputs/3aransiya-contextual
 gnome-extensions enable scratchpad@3aransiya
@@ -32,7 +32,7 @@ gnome-extensions enable scratchpad@3aransiya
 Reproduce the comparison against the same development examples:
 
 ```sh
-.venv/bin/python evaluate_context.py data/doda-sentences.csv \
+.venv/bin/python -m project_tools.evaluate_context data/doda-sentences.csv \
   data/doda-split-v2-candidate.json outputs/3aransiya-contextual
 ```
 

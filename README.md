@@ -33,31 +33,32 @@ The locked test scores cover word predictions. Sentence accuracy and foreign-spa
 
 On the Fedora Intel Core i5-8250U, median word prediction was 0.93 ms, excluding model startup, process communication, and GTK rendering. See the [locked model evaluation](docs/31-release.md) and [contextual evaluation and limits](docs/33-contextual-extension.md).
 
-## Install on Fedora
+## Get started on Fedora
 
-Verified on Fedora 45, GNOME Shell 51.1, and Wayland. Install GTK and Python GObject, then set up the pinned CPU environment.
+The verified setup is Fedora 45, GNOME Shell 51.1, and Wayland. From the repository root, install the system GTK bindings, create the pinned CPU environment, and install its dependencies.
 
 ```sh
 sudo dnf install gtk4 python3-gobject
 uv venv --python 3.14.8 --managed-python .venv
-uv pip install --python .venv/bin/python \
-  --index-url https://download.pytorch.org/whl/cpu -r requirements-cpu.txt
+UV_CACHE_DIR=data/uv-cache uv sync --locked
 ```
 
-Build the model profile using the [reproduction guide](docs/31-release.md#reproduce-the-model). Then add the contextual rules and install the GNOME extension.
+Build the base model profile as described in the [reproduction guide](docs/31-release.md#reproduce-the-model). Add the contextual rules, install the extension, then enable it.
 
 ```sh
-.venv/bin/python build_context_profile.py outputs/3aransiya-release \
-  data/doda-word-pairs-v1.json outputs/3aransiya-contextual
+.venv/bin/python -m project_tools.build_context_profile \
+  outputs/3aransiya-release data/doda-word-pairs-v1.json outputs/3aransiya-contextual
 /usr/bin/python extension/install.py --profile outputs/3aransiya-contextual
 gnome-extensions enable scratchpad@3aransiya
 ```
 
-Log out and back in if GNOME has not discovered the extension. Keep the checkout and model profile in place because the launcher uses them. You can also launch the scratchpad directly.
+Log out and back in if GNOME has not discovered the extension. Keep the checkout and model profile in place because the launcher uses them. You can launch the scratchpad directly.
 
 ```sh
 /usr/bin/python -m scratchpad --profile outputs/3aransiya-contextual
 ```
+
+The repository contains model code, notebooks, and tools, but not the licensed training corpus or trained weights. Follow the data preparation and training steps in the [reproduction guide](docs/31-release.md#reproduce-the-model) before building a profile. To run the CPU test suite, use `.venv/bin/python -m unittest discover -s tests`.
 
 ## Research and engineering
 

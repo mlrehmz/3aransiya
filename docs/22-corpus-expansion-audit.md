@@ -122,7 +122,7 @@ The [dataset builder](../build_grounded_dataset.py) assembled `data/doda-word-pa
 The local file is 124,135,191 bytes. SHA-256 `0ce61f1d95a6aa9c4932e883e116b82b009d3411149d8e9e6fce852e88a9121e`. Reopened the output and checked the original human rows, validation equality, and every source-specific pair count. Corpus files remain ignored by Git.
 
 ```sh
-python -m build_grounded_dataset data/doda-500k.jsonl data/doda-grounded-candidate.json \
+python -m project_tools.build_grounded_dataset data/doda-500k.jsonl data/doda-grounded-candidate.json \
   data/doda-word-pairs-v1.json data/doda-word-pairs-v2.json
 ```
 

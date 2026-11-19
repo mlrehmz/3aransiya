@@ -14,7 +14,7 @@ Variant-aware overall accuracy rose from 75.24% to 77.85%. Both runs predicted a
 
 ## Routing and spelling probes
 
-The [routing experiment](../compare_model_routes.py) chooses an exact human-training lookup when the leading Arabic spelling has at least three occurrences and 90% agreement. Other forms seen in human training go to the encoder–decoder. Forms unseen in human training go to the epoch-six CTC model, with the encoder–decoder as a fallback if CTC emits no usable output. Source counts come from training only. The evaluation uses the 20,081 development occurrences. The locked test remains closed.
+The [routing experiment](../project_tools/compare_model_routes.py) chooses an exact human-training lookup when the leading Arabic spelling has at least three occurrences and 90% agreement. Other forms seen in human training go to the encoder–decoder. Forms unseen in human training go to the epoch-six CTC model, with the encoder–decoder as a fallback if CTC emits no usable output. Source counts come from training only. The evaluation uses the 20,081 development occurrences. The locked test remains closed.
 
 | Candidate | Common strict | Overall strict | Still unseen strict | Median word prediction | P95 |
 | --- | ---: | ---: | ---: | ---: | ---: |

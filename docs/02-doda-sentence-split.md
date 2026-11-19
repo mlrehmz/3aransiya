@@ -35,7 +35,7 @@ Reproduce locally from the pinned CSV in the ignored `data/` directory.
 
 ```sh
 python -m unittest discover -s tests
-python -m sentence_split data/doda-sentences.csv data/doda-split-candidate.json \
+python -m project_tools.sentence_split data/doda-sentences.csv data/doda-split-candidate.json \
   --sha256 f5c001982237b2e0c095db3e0fc2f7e3123cee044762ed1e855e24bfde35d62d
 ```
 
@@ -70,7 +70,7 @@ All 48,839 records were assigned exactly once, with zero rejections. V2 produced
 Both CLI tests passed. Two v2 runs with different Python hash seeds produced byte-identical manifests. A fresh v1 run also reproduced the original candidate byte for byte. The v2 candidate manifest SHA-256 is `c4b55713980227c36695b3f946b1a186cb9544e1702a7e98908dcb0e351dd58e`.
 
 ```sh
-python -m sentence_split data/doda-sentences.csv data/doda-split-v2-candidate.json \
+python -m project_tools.sentence_split data/doda-sentences.csv data/doda-split-v2-candidate.json \
   --sha256 f5c001982237b2e0c095db3e0fc2f7e3123cee044762ed1e855e24bfde35d62d --rule v2
 ```
 

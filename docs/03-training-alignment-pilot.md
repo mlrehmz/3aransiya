@@ -71,7 +71,7 @@ The approved [extractor](../word_pairs.py) verifies both input digests, reads on
 Each emitted record belonged to its stated split. All source spans round-tripped to the emitted token after normalization. A repeat with a different Python hash seed produced identical bytes. The command rejected the v1 assignment and preserved the existing output. The v1 word-pair artifact SHA-256 is `842ba2460f0d4219cb90a41cca0cdc079d18fd1146d6756a9562833c9f2fbfbb`.
 
 ```sh
-python -m word_pairs data/doda-sentences.csv data/doda-split-v2-candidate.json \
+python -m project_tools.word_pairs data/doda-sentences.csv data/doda-split-v2-candidate.json \
   data/doda-word-pairs-v1.json
 ```
 

@@ -5,8 +5,8 @@
 The benchmark compares one fixed output per case-sensitive Latin form on the same validation occurrences as the [spelling pilot](05-common-word-scoring-rubric.md#expanded-validation-pilot). It verifies the v1 word-pair artifact digest and ranks common forms by descending training count, with Unicode order breaking ties. Unseen forms have no extracted training occurrence.
 
 ```sh
-python -m validation_benchmark data/doda-word-pairs-v1.json
-python -m validation_benchmark data/doda-word-pairs-v1.json --predictions data/model-predictions.json
+python -m project_tools.validation_benchmark data/doda-word-pairs-v1.json
+python -m project_tools.validation_benchmark data/doda-word-pairs-v1.json --predictions data/model-predictions.json
 ```
 
 Without a predictions file, the command picks the most frequent training reference for each seen form. A model can provide a JSON object mapping each original case-sensitive Latin form to a single output string. The benchmark normalizes outputs to NFC and removes nonspacing marks. Missing predictions count as misses. The JSON report includes counts and accuracies for strict exact match and the twelve pilot spelling equivalences.

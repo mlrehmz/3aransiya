@@ -15,7 +15,7 @@ Use the [pinned Fedora CPU environment](08-fedora-cpu-runtime.md#verified-local-
 ```sh
 .venv/bin/python -m sentence_pilot.train data/doda-sentences.csv data/doda-split-v2-candidate.json \
   outputs/sentence-transformer-human --epochs 4
-.venv/bin/python adapt_sentence_copy.py data/doda-sentences.csv data/doda-split-v2-candidate.json \
+.venv/bin/python -m project_tools.adapt_sentence_copy data/doda-sentences.csv data/doda-split-v2-candidate.json \
   outputs/sentence-transformer-human/epoch-4.pt outputs/sentence-transformer-copy
 .venv/bin/python -m sentence_pilot.evaluate data/doda-sentences.csv data/doda-split-v2-candidate.json \
   outputs/sentence-transformer-human/epoch-4.pt outputs/3aransiya-release \

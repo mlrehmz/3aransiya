@@ -27,12 +27,12 @@ Verified the real GTK path with pasted multiword input, Arabic phrase rendering,
 Use the CPU environment in the [README](../README.md#run-locally). Run the data preparation steps from the repository root. Obtain the pinned [human sentence CSV](https://github.com/darija-open-dataset/dataset/blob/feb88ff23153283c47d83dd677b432fe0cbac15a/sentences/sentences.csv) and [DODa-500K LFS object](https://github.com/darija-open-dataset/dataset/blob/feb88ff23153283c47d83dd677b432fe0cbac15a/doda-500k/darija_parallel.jsonl) as `data/doda-sentences.csv` and `data/doda-500k.jsonl`. The builders verify input digests. The [data audit](22-corpus-expansion-audit.md) records the screening and provenance.
 
 ```sh
-.venv/bin/python -m sentence_split data/doda-sentences.csv data/doda-split-v2-candidate.json \
+.venv/bin/python -m project_tools.sentence_split data/doda-sentences.csv data/doda-split-v2-candidate.json \
   --sha256 f5c001982237b2e0c095db3e0fc2f7e3123cee044762ed1e855e24bfde35d62d --rule v2
-.venv/bin/python -m word_pairs data/doda-sentences.csv data/doda-split-v2-candidate.json data/doda-word-pairs-v1.json
-.venv/bin/python -m grounded_manifest data/doda-500k.jsonl data/doda-sentences.csv \
+.venv/bin/python -m project_tools.word_pairs data/doda-sentences.csv data/doda-split-v2-candidate.json data/doda-word-pairs-v1.json
+.venv/bin/python -m project_tools.grounded_manifest data/doda-500k.jsonl data/doda-sentences.csv \
   data/doda-split-v2-candidate.json data/doda-word-pairs-v1.json data/doda-grounded-candidate.json
-.venv/bin/python -m build_grounded_dataset data/doda-500k.jsonl data/doda-grounded-candidate.json \
+.venv/bin/python -m project_tools.build_grounded_dataset data/doda-500k.jsonl data/doda-grounded-candidate.json \
   data/doda-word-pairs-v1.json data/doda-word-pairs-v2.json
 ```
 
@@ -48,7 +48,7 @@ done
 Set `ENCODER` and `CTC` to the two exported `bundle-…` directories printed by the trainer. The evaluated base bundles were `bundle-d4307181ae640820` and `bundle-efd647d570f21bcc` respectively. Fine-tune the encoder and assemble the profile.
 
 ```sh
-.venv/bin/python fine_tune_spellings.py data/doda-word-pairs-v2.json "$ENCODER" outputs/spelling-tune
+.venv/bin/python -m project_tools.fine_tune_spellings data/doda-word-pairs-v2.json "$ENCODER" outputs/spelling-tune
 .venv/bin/python -m scratchpad.release_model build data/doda-word-pairs-v2.json \
   outputs/spelling-tune/bundle-step-128 "$CTC" outputs/3aransiya-release
 ```
@@ -58,6 +58,6 @@ The profile contains two verified bundle directories and the generated routing t
 Run this evaluation after selecting the candidate, so decisions use development data and the test stays useful as an independent check.
 
 ```sh
-.venv/bin/python evaluate_release.py data/doda-word-pairs-v2.json data/doda-sentences.csv \
+.venv/bin/python -m project_tools.evaluate_release data/doda-word-pairs-v2.json data/doda-sentences.csv \
   data/doda-split-v2-candidate.json "$ENCODER" outputs/3aransiya-release
 ```
