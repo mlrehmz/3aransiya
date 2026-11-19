@@ -2,7 +2,7 @@
 
 The final GNOME extension uses the tuned offline GRU and CTC profile. A 49 KB table adds 1,826 adjacent-word rules learned from the pinned human training pairs. Rules apply to forms with competing Arabic spellings and require at least four matching observations and 90% agreement in that context. Conflicting left and right rules defer to the existing word predictor.
 
-The renderer preserves the exact source characters of English and French clauses that pass a conservative function-word check. It also renders reviewed Arabic expressions, including **علمت عنه من خلال قراءتي بعض كتب السلف**. These rules run before word rendering, so an English or French selection in a detected clause can be copied verbatim. The matcher is clause-based and does not reliably identify short or unpunctuated switches. The formal Arabic improvement is explicit phrase coverage and does not establish general MSA accuracy.
+The renderer preserves the exact source characters of English and French clauses that pass a conservative function-word check. It also renders a small set of reviewed Arabic expressions. These rules run before word rendering, so an English or French selection in a detected clause can be copied verbatim. The matcher is clause-based and does not reliably identify short or unpunctuated switches. The formal Arabic improvement is explicit phrase coverage and does not establish general MSA accuracy.
 
 ## Development checks
 
@@ -12,11 +12,7 @@ The renderer preserves the exact source characters of English and French clauses
 | Phrase and copy rules only | 203 | 5.93% | 5 |
 | Contextual release | 204 | 5.88% | 5 |
 
-The comparison reuses the fixed human DODa development sample and independently authored probes from the [Transformer pilot](32-sentence-transformer-pilot.md). Both new configurations also recovered the formal Arabic passage from the user draft. The 512-sentence sample shows a small Darija improvement. The five copy probes check specific errors and are too few to estimate generalization. The original locked word-test results belong to the previous release.
-
-The full draft now renders as:
-
-> [redacted Darija sample], علمت عنه من خلال قراءتي بعض كتب السلف, [redacted English sample]
+The comparison reuses the fixed human DODa development sample and independently authored probes from the [Transformer pilot](32-sentence-transformer-pilot.md). Both new configurations recovered the reviewed formal Arabic phrase in the mixed-language development case. The 512-sentence sample shows a small Darija improvement. The five copy probes check specific errors and are too few to estimate generalization. The original locked word-test results belong to the previous release.
 
 ## Build
 

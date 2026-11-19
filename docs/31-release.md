@@ -24,7 +24,7 @@ Verified the real GTK path with pasted multiword input, Arabic phrase rendering,
 
 ## Reproduce the model
 
-Use the CPU environment in the [README](../README.md#run-locally). Run the data preparation steps from the repository root. Obtain the pinned [human sentence CSV](https://github.com/darija-open-dataset/dataset/blob/feb88ff23153283c47d83dd677b432fe0cbac15a/sentences/sentences.csv) and [DODa-500K LFS object](https://github.com/darija-open-dataset/dataset/blob/feb88ff23153283c47d83dd677b432fe0cbac15a/doda-500k/darija_parallel.jsonl) as `data/doda-sentences.csv` and `data/doda-500k.jsonl`. The builders verify input digests. The [data audit](22-corpus-expansion-audit.md) records the screening and provenance.
+Use the CPU environment in the [README](../README.md#run-locally-on-fedora). Run the data preparation steps from the repository root. Obtain the pinned [human sentence CSV](https://github.com/darija-open-dataset/dataset/blob/feb88ff23153283c47d83dd677b432fe0cbac15a/sentences/sentences.csv) and [DODa-500K LFS object](https://github.com/darija-open-dataset/dataset/blob/feb88ff23153283c47d83dd677b432fe0cbac15a/doda-500k/darija_parallel.jsonl) as `data/doda-sentences.csv` and `data/doda-500k.jsonl`. The builders verify input digests. The [data audit](22-corpus-expansion-audit.md) records the screening and provenance.
 
 ```sh
 .venv/bin/python -m project_tools.sentence_split data/doda-sentences.csv data/doda-split-v2-candidate.json \

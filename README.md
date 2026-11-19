@@ -32,7 +32,7 @@ The locked test numbers measure word prediction. Sentence accuracy and language-
 
 ## Run locally on Fedora
 
-The verified desktop setup is Fedora 45, GNOME Shell 51.1, and Wayland. Install `uv`, GTK 4, and PyGObject, then prepare the locked Python environment:
+The verified desktop setup is Fedora 45, GNOME Shell 51.1, and Wayland. Install [uv](https://docs.astral.sh/uv/getting-started/installation/), GTK 4, and PyGObject, then prepare the locked Python environment:
 
 ```sh
 sudo dnf install gtk4 python3-gobject
@@ -71,7 +71,7 @@ The extension launcher uses the checkout and profile paths, so keep them in plac
 
 ## Reproduce the model
 
-Model training and profile construction are documented in the [release reproduction guide](docs/31-release.md#reproduce-the-model). It includes pinned data sources, split preparation, training, profile generation, and locked evaluation commands. To avoid redistributing restricted data and large generated artifacts, this repository does not include the DODa corpus, trained model weights, or a built release profile. The DODa data is licensed **CC BY-NC 4.0**; the project’s original code is **MIT**. Review each dataset’s license and attribution requirements before using or redistributing derived artifacts.
+Model training and profile construction are documented in the [release reproduction guide](docs/31-release.md#reproduce-the-model). It includes pinned data sources, split preparation, training, profile generation, and locked evaluation commands. To avoid redistributing restricted data and large generated artifacts, this repository does not include the DODa corpus, trained model weights, or a built release profile. The DODa data is licensed [CC BY-NC 4.0](https://github.com/darija-open-dataset/dataset/blob/feb88ff23153283c47d83dd677b432fe0cbac15a/LICENSE); the project’s original code is available under the [MIT License](LICENSE). Review each dataset’s license and attribution requirements before using or redistributing derived artifacts.
 
 ## Project map
 
@@ -80,16 +80,16 @@ Model training and profile construction are documented in the [release reproduct
 - [Corpus expansion and data screening](docs/22-corpus-expansion-audit.md)
 - [CPU training and routing results](docs/27-fedora-cpu-training-pilot.md) · [follow-up evaluation](docs/28-fedora-training-and-routing-results.md)
 - [Sentence Transformer experiment](docs/32-sentence-transformer-pilot.md)
-- [All engineering notes](docs/)
+- [Documentation index and suggested reading order](docs/README.md)
 - [Scratchpad interaction and keyboard guide](scratchpad/README.md)
 
 ## Scope and limitations
 
 The system targets Moroccan Darija written in Latin Arabizi. It does not provide general MSA transliteration, reliably resolve every short or unpunctuated language switch, or guarantee a preferred spelling for unfamiliar forms. Context rules come from a limited corpus and sentence checks. The reported results should be read with their evaluation sizes and limits above.
 
-## Privacy and generated files
+## Local data and credentials
 
-Typed text is processed locally by the app. The repository does not contain personal transcripts, account credentials, the training corpus, or model exports. Local `.env` files, Kaggle credentials, data, checkpoints, outputs, and virtual environments are excluded by `.gitignore`.
+Typed text is processed locally by the app. The repository does not contain account credentials, training corpora, or trained model exports. Local `.env` files, Kaggle credentials, data, checkpoints, outputs, and virtual environments are excluded by `.gitignore`.
 
 ## Demo preview
 

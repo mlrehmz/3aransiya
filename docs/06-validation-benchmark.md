@@ -21,6 +21,4 @@ The command reproduced the earlier common-word counts. An external predictions f
 
 This benchmark measures word prediction agreement on development data. Keystroke replay, latency, and release scoring are separate deliverables. The locked test stayed closed.
 
-## Next decision
-
-**Proposed, pending approval:** Draft the smallest shared model pilot design for the GRU encoder–decoder and bidirectional GRU/CTC candidates. Define the training vocabulary, length and CTC feasibility checks, and the validation prediction export before implementing either model.
+The benchmark was used to compare the shared GRU encoder–decoder and bidirectional GRU/CTC candidates described in [07-shared-model-pilot-design.md](07-shared-model-pilot-design.md).

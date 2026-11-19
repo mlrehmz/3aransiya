@@ -88,4 +88,4 @@ The ceiling is **9,573 / 9,901 (96.69%)** with the twelve pilot equivalences. Th
 
 This is a development diagnostic based on validation labels. It is neither a deployable baseline nor a test-set estimate. The locked test stayed closed. Use strict and pilot variant-aware scores to track progress while iterating. Revisit reference quality and the release rubric after the first model comparison.
 
-**Recommended next iteration, pending approval:** Turn the current validation calculation into a reusable headless benchmark. Reproduce the training-majority scores, then add a way to score model predictions on the same occurrences. Include overall and unseen-form exact match so the model pilot can measure generalization beyond frequent forms.
+The reusable headless benchmark is documented in [06-validation-benchmark.md](06-validation-benchmark.md). It reports common, overall, and unseen forms separately.

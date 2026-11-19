@@ -8,14 +8,14 @@ Each slash-separated form is a separate input with the same proposed output.
 
 | Word family | Latin inputs | Proposed output | Evidence |
 | --- | --- | --- | --- |
-| Reported syllable | `Xa` / `xa` / `cha` | شا | User supplied the `Xa` reading. Training has one matching `cha` occurrence. |
+| Initial consonant | `Xa` / `xa` / `cha` | شا | Training has one matching `cha` occurrence. |
 | Look | `Xouf` / `xouf` / `chouf` | شوف | Training has 36 matching `chouf` occurrences. The x forms are authored. |
 | Why | `3lax` / `3laX` / `3lach` | علاش | 481 matching `3lach` occurrences and 10 of 14 `3lax` occurrences. `3laX` is authored. |
 | Bread, خ control | `khobz` / `5obz` | خبز | Both forms are attested with this target. |
 | Cup | `ka2s` / `kas` | كاس | One and 27 training occurrences respectively, all كاس. |
 | Opinion, hamza control | `ra2y` | رأي | 11 of 13 training occurrences use this target. |
 | Conjunction control | `o` | و | 459 of 468 training occurrences use this target. |
-| Presentation | `prizontasyon` | پريزونتاسيون | User specified initial پ. The rest of the spelling is proposed for review. There are no exact training occurrences. |
+| Presentation loanword | `prizontasyon` | پريزونتاسيون | Initial پ is part of the reviewed target convention. There are no exact training occurrences. |
 | Sport, پ example | `sport` | سپور | Twelve matching occurrences and one with سـبـور. |
 
 ## Held out from the correction set
@@ -30,11 +30,11 @@ Keep these word families out of the corrective examples. The starting model may 
 | Name, uppercase X control | `REX` | ريكس | One exact occurrence. |
 | Responsible, hamza control | `mas2oul` / `ms2oul` | مسؤول | Authored expanded spelling. Three exact `ms2oul` matches. |
 | Harm, final hamza control | `so2` | سوء | One exact occurrence. |
-| Pizza, پ contrast | `piza` / `pizza` | پيتزا | Proposed user-convention check. DODa has six `pizza` occurrences under بيتزا. Confirm before treating پ as required. |
+| Pizza, پ contrast | `piza` / `pizza` | پيتزا | Proposed convention check. DODa has six `pizza` occurrences under بيتزا. |
 
 ## Open labels
 
-- `2o` → أو if the intended word is “or,” or و if it is the user's spelling of “and.” Both current bundles emit أو. Leave it out until the intended reading is confirmed.
+- `2o` → أو if the intended word is “or,” or و if it is intended as “and.” Both current bundles emit أو. Leave it out until the intended reading is confirmed.
 - Leave `xno` and `x7al` out pending review because they have conflicting corpus references.
 - Confirm the full spelling of `prizontasyon` and where پ is required in loanwords. Both bundles already have پ in their output vocabulary. It appears in 183 training occurrences, but neither bundle used it for `prizontasyon`. The encoder–decoder returned برزيتونيش and GRU/CTC returned بريزنتسيون. Case-insensitive searches found no `prizontasyon`, `presentation`, `présentation`, `prezentasyon`, or `prezontasyon` in training.
 

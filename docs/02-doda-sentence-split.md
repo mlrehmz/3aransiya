@@ -89,6 +89,4 @@ Approved and locked on 18 November 2026. The authoritative assignment is the exa
 
 The source digest, manifest digest, and each split digest were recomputed at lock time and matched the reviewed values. Regenerate using the v2 command above and verify the manifest digest before consuming the assignments. Use training and validation for development and reserve the 4,801 test sentences for final evaluation. The earlier five-pair review took place before the lock.
 
-## Next decision
-
-**Proposed, pending approval:** Run a local pilot of word alignment on training sentences only. Draft a reproducible sampling and review rubric for roughly 200 candidate alignments, with coverage of Arabizi digits, single-letter words, French loanwords, and plausible boundary mismatches. Use the results to decide which alignment rules to implement.
+The frozen assignment became the source for the alignment pilot and subsequent model comparisons. Keep the test split sealed until final evaluation.

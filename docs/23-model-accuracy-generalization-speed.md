@@ -2,7 +2,7 @@
 
 **18 November 2026 · Recommendation before the v2 training run**
 
-The current encoder–decoder leads overall validation at 81.19% strict. GRU/CTC leads the original unseen slice at 56.21%. The scratchpad user reports perceptible delay and errors on new spellings, French loans, and an MSA invocation. CPU latency and runtime causes have yet to be measured. The following experiments keep those outcomes separate. [Six-epoch validation](18-six-epoch-colab-comparison.md) · [Spelling checks](20-darija-correction-set-draft.md)
+The current encoder–decoder leads overall validation at 81.19% strict. GRU/CTC leads the original unseen slice at 56.21%. Development checks identified errors on new spellings, French loans, and a short MSA phrase. CPU latency and runtime causes had yet to be measured at this stage. The following experiments keep those outcomes separate. [Six-epoch validation](18-six-epoch-colab-comparison.md) · [Spelling checks](20-darija-correction-set-draft.md)
 
 ## First isolate the dataset change
 
@@ -19,7 +19,7 @@ The current encoder–decoder leads overall validation at 81.19% strict. GRU/CTC
 | Faster warm predictions | Compare the existing one-pass GRU/CTC with a small temporal convolutional encoder using the same CTC output head. | CTC avoids sequential output decoding. A faster encoder is a plausible experiment. Published gains for translation are not a latency estimate for an 18-character word on the i5. [Non-autoregressive CTC study](https://aclanthology.org/D18-1336/) |
 | Additional quality | Consider a small character Transformer if both GRU paths stop improving. | Transformers improved character transliteration on external tasks. Their parameter counts, task distributions, and decoding costs differ from this scratchpad. [Character-level Transformer study](https://aclanthology.org/2021.eacl-main.163/) |
 
-Maintain a word-level fast path. The invocation `asba7na wa asbaha lmolko lilah` also needs a phrase-level test because the correct output joins the conjunction to the next word. Compare reviewed phrase examples and clitic spacing independently. Consider a small context-aware model or MSA pretraining only if those tests show a persistent gap after the Darija baseline. Context-aware Arabizi systems and annotation work provide precedent for evaluating that problem at utterance level. [Arabizi utterance model](https://aclanthology.org/2020.wanlp-1.15/) · [Arabizi token alignment and clitics](https://aclanthology.org/W14-3612/)
+Maintain a word-level fast path. MSA expressions also need phrase-level checks because a correct rendering may join conjunctions and attached clitics. Compare reviewed phrase examples and spacing independently. Consider a small context-aware model or MSA pretraining only if those tests show a persistent gap after the Darija baseline. Context-aware Arabizi systems and annotation work provide precedent for evaluating that problem at utterance level. [Arabizi utterance model](https://aclanthology.org/2020.wanlp-1.15/) · [Arabizi token alignment and clitics](https://aclanthology.org/W14-3612/)
 
 ## Measure the delay users feel
 

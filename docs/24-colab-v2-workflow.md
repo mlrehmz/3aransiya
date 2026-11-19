@@ -8,7 +8,7 @@ The validated model vocabulary has 85 input and 60 output characters. All 20,081
 
 ## Official CLI
 
-Installed Google Colab CLI **0.8.0** locally at `data/colab-bin/colab` using uv. Its T4, notebook execution, upload, and download commands are documented by Google. The account check reached the OAuth authorization-code prompt, so the user must complete sign-in in their own terminal. [Official Colab CLI documentation](https://github.com/googlecolab/google-colab-cli)
+Google Colab CLI **0.8.0** was installed in the local ignored data directory using uv. Its T4, notebook execution, upload, and download commands are documented by Google. Authentication uses a local OAuth flow; account credentials remain outside the repository. [Official Colab CLI documentation](https://github.com/googlecolab/google-colab-cli)
 
 From the repository root, run `./data/colab-bin/colab usage` to complete authorization and check available compute. Once authenticated, the CLI can create a named T4 session, upload the verified dataset to `/content`, run the notebook, and download checkpoints, reports, and bundles before stopping the session. Use a named session so a failed execution can be investigated or resumed without discarding its local files.
 

@@ -21,7 +21,7 @@ A secondary Darija option, DODa-10K, offers human-reviewed Arabic and Latin Dari
 
 ## MSA and phrase coverage
 
-The reported phrase `asba7na wa asbaha lmolko lilah` is an invocation, **أصبحنا وأصبح الملك لله**, typed using informal Arabizi. A reference source provides the Arabic text and a formal romanization, which differs from the user's Latin spelling. DODa-500K is a Darija expansion. We found no verified large corpus of human MSA pairs with Moroccan-style Latin input. A separate reviewed phrase set would measure this register directly and retain the original spaces and attached clitics for editor replay. Word-pair expansion alone cannot verify phrase spacing or context behavior. [Arabic text and formal transcription](https://sunnah.com/hisn:77) · [Arabizi dataset study and treatment of MSA](https://aclanthology.org/2026.findings-emnlp.900.pdf)
+An MSA invocation was included as a phrase-level development case because a correct rendering depends on attached conjunctions and word spacing. DODa-500K is a Darija expansion, not an MSA corpus. We found no verified large corpus of human MSA pairs with Moroccan-style Latin input. A separate reviewed phrase set would measure this register directly and retain original spaces and attached clitics for editor replay. Word-pair expansion alone cannot verify phrase spacing or context behavior. [Arabizi dataset study and treatment of MSA](https://aclanthology.org/2026.findings-emnlp.900.pdf)
 
 ## Proposed next action
 
@@ -102,7 +102,7 @@ For example, row 286343 splits the name `fatimezahra` into فاطمة الزهر
 
 ## Grounded candidate manifest after shift screening
 
-The [manifest builder](../grounded_manifest.py) verified the source and v1 input checksums. It recorded the accepted one-based source line numbers in the ignored local file `data/doda-grounded-candidate.json`. The manifest SHA-256 is `6b5650ec43ac7eb385addd3d98b658fe44225d76d21c33376b1b326c27c887bd`.
+The [manifest builder](../project_tools/grounded_manifest.py) verified the source and v1 input checksums. It recorded the accepted one-based source line numbers in the ignored local file `data/doda-grounded-candidate.json`. The manifest SHA-256 is `6b5650ec43ac7eb385addd3d98b658fe44225d76d21c33376b1b326c27c887bd`.
 
 The full shift screen removed 532 of the previously accepted grounded sentences, leaving 108,944. Seven human sentence-key overlaps were skipped, all from train. No exact normalized matches with validation or test were detected. This check does not cover all near-duplicate sentences.
 
@@ -111,13 +111,13 @@ The full shift screen removed 532 of the previously accepted grounded sentences,
 | Grounded after screening | 1,014,353 | 119,415 | 98,173 | 13,808 |
 | Grounded plus v1 train | 1,170,572 | 152,520 | 123,775 | 18,537 |
 
-There are 109,822 grounded pairs absent from v1 training. These are automatically screened candidates and retain potential reference errors. No new model was trained. The user approved using roughly one million occurrences, so there is no need to trim the pool to 600,000.
+There are 109,822 grounded pairs absent from v1 training. These are automatically screened candidates and retain potential reference errors. No new model was trained during this audit. The resulting training pool contains over one million word occurrences.
 
 **Proposed next action:** Build one local Colab-ready training artifact with the surviving grounded rows and original human training data. Preserve the exact-pair counts and human versus synthetic provenance so training can control how often repeated pairs are sampled. Keep the existing validation data for direct comparison.
 
 ## Local v2 training artifact
 
-The [dataset builder](../build_grounded_dataset.py) assembled `data/doda-word-pairs-v2.json` from the verified candidate manifest. It contains **1,170,572 training occurrences**, consisting of 156,219 original human rows and 1,014,353 screened grounded rows. It records source and record identifiers per training occurrence and separate human and grounded counts for each of the **152,520 distinct pairs**. Its 20,081 validation rows exactly equal v1 validation. The artifact contains train and validation only.
+The [dataset builder](../project_tools/build_grounded_dataset.py) assembled `data/doda-word-pairs-v2.json` from the verified candidate manifest. It contains **1,170,572 training occurrences**, consisting of 156,219 original human rows and 1,014,353 screened grounded rows. It records source and record identifiers per training occurrence and separate human and grounded counts for each of the **152,520 distinct pairs**. Its 20,081 validation rows exactly equal v1 validation. The artifact contains train and validation only.
 
 The local file is 124,135,191 bytes. SHA-256 `0ce61f1d95a6aa9c4932e883e116b82b009d3411149d8e9e6fce852e88a9121e`. Reopened the output and checked the original human rows, validation equality, and every source-specific pair count. Corpus files remain ignored by Git.
 

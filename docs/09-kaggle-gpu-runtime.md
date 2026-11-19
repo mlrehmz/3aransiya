@@ -14,13 +14,13 @@ PyTorch publishes a CPython 3.13 Linux x86-64 wheel for `torch==2.11.0+cu126`. I
 
 ## Preflight script and local results
 
-Run [kaggle_preflight.py](../kaggle_preflight.py) as a fresh Python process in the GPU-enabled environment. It sets `CUDA_VISIBLE_DEVICES=0` before importing PyTorch, requires exactly one visible T4 with compute capability 7.5, reads the driver version with `nvidia-smi`, and prints a JSON report after the GRU forward and repeated-target CTC backward checks pass. It returns a failing exit status when a prerequisite or kernel check fails. The script uses synthetic tensors and takes no dataset input. It records the observed PyTorch build for comparison with the proposed pin.
+Run [kaggle_preflight.py](../project_tools/kaggle_preflight.py) as a fresh Python process in the GPU-enabled environment. It sets `CUDA_VISIBLE_DEVICES=0` before importing PyTorch, requires exactly one visible T4 with compute capability 7.5, reads the driver version with `nvidia-smi`, and prints a JSON report after the GRU forward and repeated-target CTC backward checks pass. It returns a failing exit status when a prerequisite or kernel check fails. The script uses synthetic tensors and takes no dataset input. It records the observed PyTorch build for comparison with the proposed pin.
 
 On the Fedora CPU environment, the shared tensor checks passed with finite gradients and CTC loss **1.647918**. Running the GPU entry point there failed as expected with zero visible CUDA devices. All 13 discovered repository tests passed. The [local CPU import warning](08-fedora-cpu-runtime.md#verified-local-environment) about optional NumPy was present again. GPU execution and the live Kaggle version metadata remain unverified.
 
 ## Live Kaggle result
 
-The authorized synthetic preflight ran as version 1 of a private notebook. Kaggle reported `enable_gpu=true`, `machine_shape=NvidiaTeslaT4`, and internet disabled. The notebook had no data sources. Kaggle reported image digest `sha256:0717e81990be591f8c5f98f033d29ab23e9ffde057e5b3a6bd4371f93969e962`. [Private notebook]([private notebook URL removed])
+The synthetic preflight reported `enable_gpu=true`, `machine_shape=NvidiaTeslaT4`, and internet disabled. It had no data sources. Kaggle reported image digest `sha256:0717e81990be591f8c5f98f033d29ab23e9ffde057e5b3a6bd4371f93969e962`.
 
 The job ended with status `ERROR`. Its log shows a Python 3.13 package path and the preflight message `expected one visible CUDA device, found 0`. The check stopped before running the GPU kernels or writing a runtime report. Notebook settings confirm the request, while the log establishes only what PyTorch could see. The underlying cause remains open.
 
@@ -41,8 +41,6 @@ The notebook executed with a CPU-only PyTorch build. The image and driver visibi
 
 ## Explicit GPU image request
 
-Version 3 requested Kaggle's documented GPU image, `gcr.io/kaggle-gpu-images/python`, and the `NvidiaTeslaT4` accelerator through MCP. Kaggle accepted the save, but the saved metadata retained the same prior image digest. The diagnostic completed and again reported Python 3.13.18, PyTorch 2.11.0+cpu, unavailable `nvidia-smi`, and zero visible CUDA devices. This establishes that the explicit image request did not change the effective environment for this run. The root cause remains open. [Kaggle GPU image repository](https://github.com/Kaggle/docker-python) · [Private notebook]([private notebook URL removed])
+Version 3 requested Kaggle's documented GPU image, `gcr.io/kaggle-gpu-images/python`, and the `NvidiaTeslaT4` accelerator through the provider settings. Kaggle accepted the save, but the saved metadata retained the same prior image digest. The diagnostic completed and again reported Python 3.13.18, PyTorch 2.11.0+cpu, unavailable `nvidia-smi`, and zero visible CUDA devices. This establishes that the explicit image request did not change the effective environment for this run. The root cause remains open. [Kaggle GPU image repository](https://github.com/Kaggle/docker-python)
 
-## Next decision
-
-**Proposed, pending approval:** Use Kaggle's documented editor workflow. Inspect **Session options** for the Docker image and accelerator, then check the accelerator in **Save Version → Advanced Settings**, since Save & Run All starts a separate session. If an authenticated editor is available, choose T4 ×2 and run the diagnostic with synthetic inputs. Keep the notebook private with internet disabled. [Kaggle Notebook settings](https://www.kaggle.com/docs/notebooks) · [Kaggle batch accelerator settings](https://www.kaggle.com/product-feedback/161328)
+This diagnostic explains why the project moved its final CPU training and inference checks to the local reproducible environment. The included Colab notebooks remain optional experiments; training on Colab is not required to run the desktop app.

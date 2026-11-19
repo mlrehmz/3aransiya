@@ -48,13 +48,13 @@ Some plausible pairs still have more than one acceptable reference. For example,
 
 ## Next decision
 
-**Proposed, pending approval:** Implement a conservative first extractor using equal token counts and script-compatible positions. Preserve Latin case, source IDs, and offsets. Pass identical standalone digits through the audit as anchors and exclude them from model examples. Keep a record/token exclusion list for the eight reviewed rejects and unclear cases, and report conflicting references without silently selecting a spelling. Use the approved split manifest to restrict development to train and validation.
+The extractor was implemented in `project_tools/word_pairs.py` with case preservation, source IDs, offsets, and an explicit exclusion list. The resulting train and validation examples fed the reference-frequency audit and shared model benchmark.
 
 The screen admits some silent boundary shifts and reference errors. Measure the resulting coverage and audit further examples before adding merge/split recovery or a more complex aligner.
 
 ## First extractor results
 
-The approved [extractor](../word_pairs.py) verifies both input digests, reads only train and validation records for extraction, and writes an ignored local artifact. It preserves NFC Latin case and stores half-open character offsets into both original CSV fields. The eight reviewed exclusions were all applied. Matching standalone ASCII digits serve as alignment anchors and produce no word pairs.
+The [extractor](../project_tools/word_pairs.py) verifies both input digests, reads only train and validation records for extraction, and writes an ignored local artifact. It preserves NFC Latin case and stores half-open character offsets into both original CSV fields. The eight reviewed exclusions were all applied. Matching standalone ASCII digits serve as alignment anchors and produce no word pairs.
 
 | Measure | Train | Validation |
 | --- | ---: | ---: |
@@ -85,10 +85,10 @@ After extraction, I drew 15 candidate occurrences each from train and validation
 | Validation | 13 | 1 | 1 |
 | **Total** | **27** | **2** | **1** |
 
-- Train record 3367, token 1 pairs `tomobil` with الطوموبيل, which adds the definite article. The same noun is recognizable, but the pair changes what the user typed.
+- Train record 3367, token 1 pairs `tomobil` with الطوموبيل, which adds the definite article and changes the Latin form's meaning.
 - Validation record 13995, token 0 pairs `ilama` with إلا. The negation moves to the next Arabic token, so the positional pair loses part of the input.
 - Validation record 23588, token 0 pairs `mxina` with مخينا. In context the intended verb appears to be “we went,” but the Arabic consonant differs from the reading suggested by the Latin form.
 
 The fresh review shows that matching token counts still admits boundary and reference errors. These observations are recorded for the next rule decision. The output above includes all three newly flagged pairs. This small, single-reviewer sample cannot establish corpus-wide precision. No locked test pairs were reviewed.
 
-**Proposed next decision:** Audit the 500 most frequent eligible training forms for reference ambiguity and measure their coverage and best-single-reference agreement on validation. This will help decide whether to tighten extraction before freezing the scoring protocol or training either model.
+This review led to the training-reference audit in [04-common-word-reference-audit.md](04-common-word-reference-audit.md), followed by a fixed validation benchmark.

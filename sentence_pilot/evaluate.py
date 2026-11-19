@@ -22,11 +22,10 @@ MIXED = (
     ("wach jay? I will be there tomorrow.", "I will be there tomorrow."),
     ("chokran, je te rappelle demain.", "je te rappelle demain."),
     ("je suis déjà là, wach nta 9rib?", "je suis déjà là"),
-    ("[redacted mixed-language sample], "
-     "3alimto 3nho min khilali 9ira2ati ba3di kotobi ssalaf, "
-     "[redacted English sample]", "[redacted English sample]"),
+    ("salam labas, asba7na wa asbaha lmolko lilah, please check the result",
+     "please check the result"),
 )
-PHRASE = "علمت عنه من خلال قراءتي بعض كتب السلف"
+PHRASE = "أصبحنا وأصبح الملك لله"
 
 
 def edit_distance(left, right):

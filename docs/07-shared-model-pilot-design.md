@@ -36,8 +36,6 @@ A CTC target needs at least its character count plus one frame for each adjacent
 - A shared data loader owns vocabulary IDs, lengths, and batches. Each model owns its training loss and greedy decoding. The prediction exporter takes a trained model and emits the [benchmark JSON mapping](06-validation-benchmark.md) for distinct validation Latin forms in sorted order. The scorer owns reference normalization and scoring. Omit failed outputs and report the reasons.
 - Start with a small fixture that exercises case preservation, an adjacent repeated Arabic letter, and shorter sequences in a padded batch. Verify the CTC preflight catches a deliberately infeasible frame count. Check emitted predictions end to end through the benchmark and verify missing outputs remain in the denominator.
 - Use a local random-weight timing check, including the longest supported input and a decoder run that reaches its bound. Then overfit a tiny training batch for each model. A failed preflight or tiny-batch check stops the launch. Run the agreed two-epoch comparison only after both checks pass and the runtime and corpus permissions for the training environment are confirmed.
-- Keep the first implementation local. Verify Python and PyTorch compatibility on the target host before pinning and installing the CPU runtime. Verify Kaggle compatibility and resolve private upload terms before any corpus transfer. The CPU timing check and GPU pilot are separate stages.
+- Keep the desktop CPU runtime separate from the optional cloud training runtime. Do not transfer restricted corpus data unless the relevant service terms and dataset license permit it.
 
-## Next decision
-
-**Proposed, pending approval:** Verify a compatible PyTorch CPU build for the Fedora host and Python environment. Record the smallest supported runtime choice before adding dependencies or writing model code.
+The shared loader, models, trainer, and benchmark adapter are implemented in `model_pilot/` and `project_tools/`.
