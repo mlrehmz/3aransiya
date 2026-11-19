@@ -2,7 +2,7 @@
 
 **An offline Arabizi scratchpad for Moroccan Darija on GNOME.**
 
-[![Watch the 3aransiya demo](demo/demo1-thumbnail.jpg)](demo/demo1.mp4)
+[![Watch the 3aransiya demo](demo/demo1.gif)](demo/demo1.mp4)
 
 [Open or download the demo video](demo/demo1.mp4).
 
