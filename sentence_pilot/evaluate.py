@@ -10,6 +10,7 @@ from time import perf_counter
 
 import torch
 
+from scratchpad.context import load_context
 from scratchpad.phrases import render_text
 from scratchpad.release_model import load_profile
 from .data import MAX_CHARS, normalize, read_pairs
@@ -38,7 +39,7 @@ def edit_distance(left, right):
     return prior[-1]
 
 
-def baseline_renderer(profile):
+def baseline_renderer(profile, *, context=None):
     predict_word = load_profile(profile)
 
     def output(match):
@@ -50,7 +51,7 @@ def baseline_renderer(profile):
         except ValueError:
             return text
 
-    return lambda batch: [render_text(text, output, phrases=True) for text in batch]
+    return lambda batch: [render_text(text, output, phrases=True, context=context) for text in batch]
 
 
 def split_probe(text, predict):

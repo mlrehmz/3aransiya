@@ -10,6 +10,7 @@ from .word_range import WordRange
 from gi.repository import Gdk, Gio, GLib, Gtk, Pango
 
 from .composition import PredictionRequest
+from .context import load_context
 from .phrases import LATIN_TOKEN, render_text
 from .release_model import profile_inputs
 from .predictor import HelperPredictor, MockPredictor, application_id
@@ -23,12 +24,13 @@ HIDE_ICON = 'hide.svg'
 
 
 class ScratchpadWindow(Gtk.ApplicationWindow):
-    def __init__(self, application, *, helper_command=None, phrases=False):
+    def __init__(self, application, *, helper_command=None, phrases=False, context=None):
         super().__init__(
             application=application, title='3aransiya', default_width=820,
             default_height=101, hide_on_close=True, decorated=False,
         )
         self._phrases = phrases
+        self._context = context
         self.add_css_class('scratchpad-window')
         self.editor = Gtk.TextView(wrap_mode=Gtk.WrapMode.WORD_CHAR)
         self.editor.set_direction(Gtk.TextDirection.LTR)
@@ -224,8 +226,8 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         return False
 
     def _arabic_text(self, start, end, *, keep_unresolved=False):
-        draft = self.buffer.get_text(start, end, True)
-        offset = start.get_offset()
+        draft = self.buffer.get_text(*self.buffer.get_bounds(), True)
+        bounds = start.get_offset(), end.get_offset()
         cursor = self.buffer.get_iter_at_mark(self.buffer.get_insert()).get_offset()
 
         def render_token(match):
@@ -235,11 +237,11 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
             if token in self._translations:
                 return self._translations[token]
             if (self._preview_output and self._preview_request
-                    and offset + match.end() == cursor and token == self._preview_request.word):
+                    and match.end() == cursor and token == self._preview_request.word):
                 return self._preview_output
             return token if keep_unresolved else ''
 
-        return render_text(draft, render_token, phrases=self._phrases)
+        return render_text(draft, render_token, phrases=self._phrases, context=self._context, bounds=bounds)
 
     def _render_rows(self):
         output = self._arabic_text(*self.buffer.get_bounds())
@@ -316,9 +318,10 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
 
 
 class ScratchpadApplication(Gtk.Application):
-    def __init__(self, *, synthetic_helper=False, bundle=None, profile=None):
+    def __init__(self, *, synthetic_helper=False, bundle=None, profile=None, context=None):
         app_id = application_id(profile or bundle)
         self._phrases = profile is not None
+        self._context = context
         python = Path(__file__).resolve().parents[1] / '.venv/bin/python'
         self._helper_command = None
         if profile is not None:
@@ -353,7 +356,9 @@ class ScratchpadApplication(Gtk.Application):
             Gtk.StyleContext.add_provider_for_display(
                 Gdk.Display.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
             )
-            self.window = ScratchpadWindow(self, helper_command=self._helper_command, phrases=self._phrases)
+            self.window = ScratchpadWindow(
+                self, helper_command=self._helper_command, phrases=self._phrases, context=self._context,
+            )
             self.add_action(self._quit_action())
             start_over = Gio.SimpleAction.new('start-over', None)
             start_over.connect('activate', lambda *_: self.window.start_over())
@@ -383,7 +388,13 @@ if __name__ == '__main__':
     if options.profile and not all(path.is_file() for path in profile_inputs(options.profile)):
         parser.error('--profile must point to a complete release model directory')
     synthetic_helper = os.environ.get('ARANSIYA_SYNTHETIC_HELPER') == '1'
-    application = ScratchpadApplication(synthetic_helper=synthetic_helper, bundle=options.bundle, profile=options.profile)
+    try:
+        context = load_context(options.profile) if options.profile else None
+    except (OSError, ValueError) as error:
+        parser.error(str(error))
+    application = ScratchpadApplication(
+        synthetic_helper=synthetic_helper, bundle=options.bundle, profile=options.profile, context=context,
+    )
     status = application.run([])
     if (synthetic_helper or options.bundle is not None or options.profile is not None) and application.window is not None:
         # Wait after the GTK loop so helper cleanup cannot block the editor.
