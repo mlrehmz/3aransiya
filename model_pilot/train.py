@@ -278,6 +278,7 @@ def main():
     parser.add_argument("--save-every", type=int, default=1)
     parser.add_argument("--steps-this-session", type=int)
     parser.add_argument("--human-weighted", action="store_true", help="use 25%% human batches for the v2 comparison")
+    parser.add_argument("--device", choices=("t4", "cpu"), default="t4")
     args = parser.parse_args()
     if min(args.epochs, args.batch_size, args.save_every) < 1 or (
         args.steps_this_session is not None and args.steps_this_session < 1
@@ -288,16 +289,17 @@ def main():
         or args.epochs != 1 or args.batch_size != 128 or args.seed != 42
     ):
         parser.error("the human-weighted comparison requires the v2 encoder–decoder, one epoch, batch size 128, and seed 42")
-    if (not torch.cuda.is_available() or torch.cuda.get_device_capability(0) != (7, 5)
+    if args.device == "t4" and (not torch.cuda.is_available() or torch.cuda.get_device_capability(0) != (7, 5)
             or "T4" not in torch.cuda.get_device_name(0).split()):
         parser.error("a CUDA-enabled T4 is required; select the T4 runtime in Colab")
-    print(f"Training on {torch.cuda.get_device_name(0)} with PyTorch {torch.__version__}", flush=True)
+    device = torch.device("cpu" if args.device == "cpu" else "cuda:0")
+    hardware = "CPU" if device.type == "cpu" else torch.cuda.get_device_name(device)
+    print(f"Training on {hardware} with PyTorch {torch.__version__}", flush=True)
     artifact_sha256 = DATASETS[args.dataset_version]
     data = load_development_data(args.word_pairs, version=args.dataset_version)
     print(f"Training occurrences: {len(data.training):,}", flush=True)
     revision = source_digest()
     args.run.mkdir(parents=True, exist_ok=True)
-    device = torch.device("cuda:0")
     pairs = {"train": data.training, "validation": data.validation}
 
     def epoch_report(epoch):
