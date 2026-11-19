@@ -8,7 +8,7 @@ from shutil import copytree
 from tempfile import TemporaryDirectory
 
 from scratchpad.context import learn_context, load_context
-from validation_benchmark import ARTIFACT_SHA256
+from project_tools.validation_benchmark import ARTIFACT_SHA256
 
 
 def main():

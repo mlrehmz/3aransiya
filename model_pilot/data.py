@@ -8,7 +8,7 @@ import unicodedata
 import torch
 from torch.nn.utils.rnn import pad_sequence
 
-from validation_benchmark import ARTIFACT_SHA256, V2_ARTIFACT_SHA256
+from project_tools.validation_benchmark import ARTIFACT_SHA256, V2_ARTIFACT_SHA256
 
 PAD = 0
 UNK = 1

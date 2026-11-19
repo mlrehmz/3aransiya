@@ -17,7 +17,7 @@ import torch
 
 from model_pilot.bundle import ARCHITECTURES, BundlePredictor, load_bundle, write_bundle
 from model_pilot.data import DATASETS, collate, load_development_data
-from validation_benchmark import benchmark
+from project_tools.validation_benchmark import benchmark
 
 
 def atomic_write(path, data):

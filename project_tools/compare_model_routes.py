@@ -15,7 +15,7 @@ from model_pilot.bundle import load_bundle
 from model_pilot.data import load_development_data
 from scratchpad.phrases import render_text, shorten
 from scratchpad.release_model import human_references, routed_predict, training_references
-from validation_benchmark import benchmark
+from project_tools.validation_benchmark import benchmark
 
 
 PROBES = (

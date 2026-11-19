@@ -10,7 +10,7 @@ import random
 
 import torch
 
-from compare_model_routes import human_references
+from project_tools.compare_model_routes import human_references
 from model_pilot.bundle import load_bundle, write_bundle
 from model_pilot.data import DATASETS, collate, load_development_data
 from model_pilot.train import source_digest, validate

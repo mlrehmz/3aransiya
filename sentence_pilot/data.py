@@ -11,7 +11,7 @@ import unicodedata
 import torch
 from torch.nn.utils.rnn import pad_sequence
 
-from word_pairs import LOCKED_SHA256
+from project_tools.word_pairs import LOCKED_SHA256
 
 
 MAX_CHARS = 160

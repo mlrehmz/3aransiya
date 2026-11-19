@@ -23,7 +23,7 @@ hna,هنا
             source.write_bytes(fixture.encode("utf-8"))
             checksum = hashlib.sha256(source.read_bytes()).hexdigest()
             command = [
-                sys.executable, "-m", "sentence_split", str(source), str(manifest),
+                sys.executable, "-m", "project_tools.sentence_split", str(source), str(manifest),
                 "--sha256",
             ]
             subprocess.run([*command, checksum], check=True, capture_output=True)
@@ -49,7 +49,7 @@ hna,هنا
             data = fixture.encode("utf-8")
             source.write_bytes(data)
             subprocess.run([
-                sys.executable, "-m", "sentence_split", str(source), str(manifest),
+                sys.executable, "-m", "project_tools.sentence_split", str(source), str(manifest),
                 "--sha256", hashlib.sha256(data).hexdigest(), "--rule", "v2",
             ], check=True)
             result = json.loads(manifest.read_bytes())

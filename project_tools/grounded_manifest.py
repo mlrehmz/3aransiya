@@ -7,9 +7,9 @@ from hashlib import file_digest
 import json
 from pathlib import Path
 
-from sentence_split import sentence_keys, write_manifest
-from validation_benchmark import ARTIFACT_SHA256
-from word_pairs import LOCKED_SHA256, digit_anchor, has_script, tokenize
+from project_tools.sentence_split import sentence_keys, write_manifest
+from project_tools.validation_benchmark import ARTIFACT_SHA256
+from project_tools.word_pairs import LOCKED_SHA256, digit_anchor, has_script, tokenize
 
 SOURCE_SHA256 = "76bf4df07676eb2ccadd1ed26a7c23ddd633794f6abb8e6c8e05aa93d1fa000a"
 

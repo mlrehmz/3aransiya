@@ -8,12 +8,12 @@ import sys
 
 import torch
 
-from compare_model_routes import measure
+from project_tools.compare_model_routes import measure
 from model_pilot.bundle import load_bundle
 from model_pilot.data import load_development_data
 from scratchpad.release_model import file_digest, load_profile
-from validation_benchmark import benchmark
-from word_pairs import extract
+from project_tools.validation_benchmark import benchmark
+from project_tools.word_pairs import extract
 
 
 def main():

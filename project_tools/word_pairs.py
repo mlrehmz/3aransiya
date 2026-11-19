@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 import unicodedata as ud
 
-from sentence_split import write_manifest
+from project_tools.sentence_split import write_manifest
 
 LOCKED_SHA256 = "c4b55713980227c36695b3f946b1a186cb9544e1702a7e98908dcb0e351dd58e"
 DEVELOPMENT_SPLITS = ("train", "validation")
