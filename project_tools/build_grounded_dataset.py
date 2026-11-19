@@ -1,11 +1,11 @@
 """Assemble the verified grounded training pool and original validation rows."""
 
 import argparse
+import json
+import tempfile
 from collections import Counter
 from hashlib import file_digest
-import json
 from pathlib import Path
-import tempfile
 
 from project_tools.grounded_manifest import SOURCE_SHA256, screen, verify
 from project_tools.validation_benchmark import ARTIFACT_SHA256
