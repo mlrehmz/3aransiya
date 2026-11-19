@@ -2,15 +2,7 @@
 
 **An offline Arabizi scratchpad for Moroccan Darija on GNOME.**
 
-Type or paste Latin Darija and Arabizi. The scratchpad shows Arabic output as you write and copies the result. Open it from the **ض** icon in the GNOME top bar.
-
-> **Screenshots**
->
-> Add screenshots of the top-bar icon and scratchpad here before publishing.
->
-> `Xa kas 123` → **شا كاس 123**
->
-> `asba7na wa asbaha lmolko lilah` → **أصبحنا وأصبح الملك لله**
+<video controls src="demo/demo1.mp4" title="demo"></video>
 
 ## What it does
 
@@ -35,7 +27,7 @@ The locked DODa test measures word predictions and routing. Contextual rendering
 
 The locked test scores cover word predictions. Sentence accuracy and foreign-span preservation come from separate development checks, not the locked test. The user's mixed Darija, formal Arabic, and English example now renders as follows.
 
-> [redacted Darija sample], علمت عنه من خلال قراءتي بعض كتب السلف, [redacted English sample]
+> [redacted Darija sample], علمت عنه من خلال قراءتي بعض كتب , [redacted English sample]
 
 On the Fedora Intel Core i5-8250U, median word prediction was 0.93 ms, excluding model startup, process communication, and GTK rendering. See the [locked model evaluation](docs/31-release.md) and [contextual evaluation and limits](docs/33-contextual-extension.md).
 
