@@ -13,3 +13,7 @@ Installed Google Colab CLI **0.8.0** locally at `data/colab-bin/colab` using uv.
 From the repository root, run `./data/colab-bin/colab usage` to complete authorization and check available compute. Once authenticated, the CLI can create a named T4 session, upload the verified dataset to `/content`, run the notebook, and download checkpoints, reports, and bundles before stopping the session. Use a named session so a failed execution can be investigated or resumed without discarding its local files.
 
 The loader, validation counts, notebook settings, and embedded source were verified locally. No remote runtime was provisioned and no dataset was uploaded during setup.
+
+## Training output in Colab
+
+The training cell forwards the child process's stdout and stderr into notebook output and prints the run directory before starting each candidate. This changes log display only. The embedded trainer and checkpoint identity remain the same. A local notebook-cell fixture reproduced the missing output and verified live forwarding after the fix.

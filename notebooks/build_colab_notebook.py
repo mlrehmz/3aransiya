@@ -114,7 +114,20 @@ for architecture in CANDIDATES:
     ]
     if STEPS_THIS_SESSION is not None:
         command.extend(["--steps-this-session", str(STEPS_THIS_SESSION)])
-    subprocess.run(command, cwd=LOCAL, env={**os.environ, "CUDA_VISIBLE_DEVICES": "0"}, check=True)
+    print()
+    print(f"Training or resuming {architecture} → {run}", flush=True)
+    with subprocess.Popen(
+        command, cwd=LOCAL, env={**os.environ, "CUDA_VISIBLE_DEVICES": "0", "PYTHONUNBUFFERED": "1"},
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+    ) as process:
+        try:
+            for line in process.stdout:
+                print(line, end="", flush=True)
+        except KeyboardInterrupt:
+            process.terminate()
+            raise
+        if process.wait():
+            raise subprocess.CalledProcessError(process.returncode, command)
 """),
     ("validation_note", "markdown", """## Validation on held-out development words
 
