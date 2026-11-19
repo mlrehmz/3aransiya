@@ -1,77 +1,102 @@
 # 3aransiya
 
-**An offline Arabizi scratchpad for Moroccan Darija on GNOME.**
+**An offline Arabizi-to-Arabic scratchpad for Moroccan Darija on GNOME.**
 
-[![Watch the 3aransiya demo](demo/demo1.gif)](demo/demo1.mp4)
+[![Watch the demo](demo/demo1.gif)](demo/demo1.mp4)
 
-[Open or download the demo video](demo/demo1.mp4).
+The GIF is an 8× speed preview; the linked [video](demo/demo1.mp4) plays at normal speed.
 
-## What it does
+## The project
 
-- Runs locally on Fedora using a compact offline model profile.
-- Uses nearby words to resolve some Darija spelling choices.
-- Preserves recognized English and French clauses in their original script.
-- Renders a small set of reviewed phrases, including common formal Arabic expressions.
-- Copies the selected text or full draft. Press **Ctrl+S** to clear the draft.
+3aransiya explores a practical question: can people type Moroccan Darija in familiar Latin Arabizi and get useful Arabic-script text immediately, without sending their writing to a server?
 
-The current build combines a character GRU, a CTC fallback, high-agreement spelling lookups, contextual spelling rules learned from human Darija sentences, and reviewed phrase rules.
+The result is a compact GNOME scratchpad that predicts while you type, keeps the source draft available, and lets you copy Arabic output. It preserves supported English and French spans and renders a small, explicitly reviewed set of Arabic phrases. Inference runs locally. The project also includes the data preparation, model experiments, evaluation, and extension code used to build the release.
 
-## Evaluation
+## How the approach evolved
 
-The locked DODa test measures word predictions and routing. Contextual rendering was evaluated separately on development sentences and mixed-language probes. These scores describe different evaluations.
+1. **Build a fast word baseline.** Character-level GRU encoder–decoder and CTC models established a reproducible starting point and exposed weak generalization to spellings missing from training.
+2. **Expand the evidence carefully.** The project screened and aligned over one million grounded word occurrences, grouped duplicate sentences before splitting, and kept validation and locked test data separate from training.
+3. **Test alternatives and measure limits.** A small sentence Transformer was evaluated for contextual spelling and mixed-language preservation. It did not outperform the simpler word-level system on the sentence checks, so it was not shipped.
+4. **Ship a constrained hybrid.** The release combines neural word prediction, high-agreement lookups, local context rules, and a small reviewed phrase set. This kept the interface fast while improving the measured locked word score. It is still a Darija-focused system, not a general Arabic transliterator.
 
-| Measure | Previous word release | Current contextual release |
-|---|---:|---:|
-| Locked word test, strict accuracy | 81.02% | **82.27%** |
-| Locked test words still unseen in v2 training | 49.65% | **52.16%** |
-| Development sentences exactly matched | 203 / 512 | **204 / 512** |
-| English and French probe spans preserved | 0 / 5 | **5 / 5** |
+## Results
 
-The locked test scores cover word predictions. Sentence accuracy and foreign-span preservation come from separate development checks, not the locked test. The user's mixed Darija, formal Arabic, and English example now renders as follows.
+| Evaluation | Earlier word model | Current release |
+| --- | ---: | ---: |
+| Locked DODa word test, strict accuracy | 81.02% | **82.27%** |
+| Locked test forms still unseen in v2 training | 49.65% | **52.16%** |
+| Human development sentences exactly matched | 203 / 512 | **204 / 512** |
+| English/French spans preserved in targeted probes | 0 / 5 | **5 / 5** |
 
-> [redacted Darija sample], علمت عنه من خلال قراءتي بعض كتب , [redacted English sample]
+The locked test numbers measure word prediction. Sentence accuracy and language-span preservation come from separate development checks; the five preservation probes are too small to estimate broad generalization. On the verified Fedora Intel Core i5-8250U, median warm word prediction was **0.93 ms** and p95 was **2.40 ms**. These timings exclude model startup, process communication, and GTK rendering. The full protocol, slices, and limitations are in the [release evaluation](docs/31-release.md) and [contextual evaluation](docs/33-contextual-extension.md).
 
-On the Fedora Intel Core i5-8250U, median word prediction was 0.93 ms, excluding model startup, process communication, and GTK rendering. See the [locked model evaluation](docs/31-release.md) and [contextual evaluation and limits](docs/33-contextual-extension.md).
+## Run locally on Fedora
 
-## Get started on Fedora
-
-The verified setup is Fedora 45, GNOME Shell 51.1, and Wayland. From the repository root, install the system GTK bindings, create the pinned CPU environment, and install its dependencies.
+The verified desktop setup is Fedora 45, GNOME Shell 51.1, and Wayland. Install `uv`, GTK 4, and PyGObject, then prepare the locked Python environment:
 
 ```sh
 sudo dnf install gtk4 python3-gobject
 uv venv --python 3.14.8 --managed-python .venv
-UV_CACHE_DIR=data/uv-cache uv sync --locked
+uv sync --locked
 ```
 
-Build the base model profile as described in the [reproduction guide](docs/31-release.md#reproduce-the-model). Add the contextual rules, install the extension, then enable it.
+`pyproject.toml` declares the Python package and pinned CPU PyTorch dependency; `uv.lock` locks the full Python environment. GTK and PyGObject are system packages because the desktop app uses the system GTK runtime.
+
+Run the automated checks:
 
 ```sh
-.venv/bin/python -m project_tools.build_context_profile \
-  outputs/3aransiya-release data/doda-word-pairs-v1.json outputs/3aransiya-contextual
-/usr/bin/python extension/install.py --profile outputs/3aransiya-contextual
-gnome-extensions enable scratchpad@3aransiya
+.venv/bin/python -m unittest discover -s tests -v
 ```
 
-Log out and back in if GNOME has not discovered the extension. Keep the checkout and model profile in place because the launcher uses them. You can launch the scratchpad directly.
+To inspect the scratchpad UI without downloading a corpus or model, start the synthetic helper. It returns artificial output for UI checks; it is not a Darija model.
+
+```sh
+ARANSIYA_SYNTHETIC_HELPER=1 /usr/bin/python -m scratchpad
+```
+
+To use the real offline model, first build a local profile using the data and model steps in the [reproduction guide](docs/31-release.md#reproduce-the-model), then launch it:
 
 ```sh
 /usr/bin/python -m scratchpad --profile outputs/3aransiya-contextual
 ```
 
-The repository contains model code, notebooks, and tools, but not the licensed training corpus or trained weights. Follow the data preparation and training steps in the [reproduction guide](docs/31-release.md#reproduce-the-model) before building a profile. To run the CPU test suite, use `.venv/bin/python -m unittest discover -s tests`.
+To install the GNOME top-bar extension for that profile:
 
-## Research and engineering
+```sh
+/usr/bin/python extension/install.py --profile outputs/3aransiya-contextual
+gnome-extensions enable scratchpad@3aransiya
+```
 
-The project documents corpus exploration, leakage-aware splits, alignment screening, resumable Colab and CPU training, model comparisons, and a sentence-level Transformer experiment. The Transformer pilot did not outperform the word-level model. The final build uses constrained context-based spelling choices and preserves recognized foreign-language clauses.
+The extension launcher uses the checkout and profile paths, so keep them in place. Log out and back in if GNOME has not discovered the extension.
 
-- [Data and split decisions](docs/01-doda-data-exploration.md)
-- [CPU training pilot](docs/27-fedora-cpu-training-pilot.md)
-- [Locked word evaluation](docs/31-release.md)
-- [Contextual extension evaluation](docs/33-contextual-extension.md)
-- [Sentence Transformer pilot](docs/32-sentence-transformer-pilot.md)
+## Reproduce the model
 
-## Data and license
+Model training and profile construction are documented in the [release reproduction guide](docs/31-release.md#reproduce-the-model). It includes pinned data sources, split preparation, training, profile generation, and locked evaluation commands. To avoid redistributing restricted data and large generated artifacts, this repository does not include the DODa corpus, trained model weights, or a built release profile. The DODa data is licensed **CC BY-NC 4.0**; the project’s original code is **MIT**. Review each dataset’s license and attribution requirements before using or redistributing derived artifacts.
 
-Original project code is available under the [MIT License](LICENSE). DODa is provided by its maintainers under [CC BY-NC 4.0](https://github.com/darija-open-dataset/dataset/blob/feb88ff23153283c47d83dd677b432fe0cbac15a/LICENSE). Corpus files and trained profiles are local build artifacts and are not included in this repository.
+## Project map
 
-General MSA transliteration, short or unpunctuated language switches, and unfamiliar spellings such as `prizontasyon` remain limitations. Contextual results come from a small development sample and need broader speaker review.
+- [Release evaluation and reproduction](docs/31-release.md)
+- [Contextual rules, sentence checks, and limitations](docs/33-contextual-extension.md)
+- [Corpus expansion and data screening](docs/22-corpus-expansion-audit.md)
+- [CPU training and routing results](docs/27-fedora-cpu-training-pilot.md) · [follow-up evaluation](docs/28-fedora-training-and-routing-results.md)
+- [Sentence Transformer experiment](docs/32-sentence-transformer-pilot.md)
+- [All engineering notes](docs/)
+- [Scratchpad interaction and keyboard guide](scratchpad/README.md)
+
+## Scope and limitations
+
+The system targets Moroccan Darija written in Latin Arabizi. It does not provide general MSA transliteration, reliably resolve every short or unpunctuated language switch, or guarantee a preferred spelling for unfamiliar forms. Context rules come from a limited corpus and sentence checks. The reported results should be read with their evaluation sizes and limits above.
+
+## Privacy and generated files
+
+Typed text is processed locally by the app. The repository does not contain personal transcripts, account credentials, the training corpus, or model exports. Local `.env` files, Kaggle credentials, data, checkpoints, outputs, and virtual environments are excluded by `.gitignore`.
+
+## Demo preview
+
+The GIF is generated from the normal-speed MP4 with FFmpeg and keeps the source frame dimensions:
+
+```sh
+python project_tools/make_demo_gif.py
+```
+
+Install FFmpeg to regenerate the preview. Adjust its playback speed and frame rate with `--speed` and `--fps`.
