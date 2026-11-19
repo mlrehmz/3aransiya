@@ -10,23 +10,25 @@ from .word_range import WordRange
 from gi.repository import Gdk, Gio, GLib, Gtk, Pango
 
 from .composition import PredictionRequest
+from .phrases import LATIN_TOKEN, render_text
+from .release_model import profile_inputs
 from .predictor import HelperPredictor, MockPredictor, application_id
 from .worker import PredictionWorker
 
-LATIN_TOKEN = re.compile(r'[A-Za-z0-9]+')
 WORD = re.compile(r'[A-Za-z0-9]+\Z')
 MAX_WORD = 128
-MAX_WAITING = 16
+MAX_WAITING = 64
 COPY_ICON = 'copy.svg'
 HIDE_ICON = 'hide.svg'
 
 
 class ScratchpadWindow(Gtk.ApplicationWindow):
-    def __init__(self, application, *, helper_command=None):
+    def __init__(self, application, *, helper_command=None, phrases=False):
         super().__init__(
             application=application, title='3aransiya', default_width=820,
             default_height=101, hide_on_close=True, decorated=False,
         )
+        self._phrases = phrases
         self.add_css_class('scratchpad-window')
         self.editor = Gtk.TextView(wrap_mode=Gtk.WrapMode.WORD_CHAR)
         self.editor.set_direction(Gtk.TextDirection.LTR)
@@ -122,7 +124,7 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
 
     def _copy(self, _button):
         bounds = self.buffer.get_selection_bounds() or self.buffer.get_bounds()
-        text = self._arabic_text(*bounds)
+        text = self._arabic_text(*bounds, keep_unresolved=True)
         if not text:
             return
         self.editor.get_clipboard().set(text)
@@ -167,27 +169,32 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         return start, match[0]
 
     def _inserted(self, buffer, position, text, _length):
-        if self._applying or self._closed or len(text) != 1:
+        if self._applying or self._closed or not text:
             return
-        if WORD.fullmatch(text):
+        if len(text) == 1 and WORD.fullmatch(text):
             return
-        end = position.copy()
-        if not end.backward_char():
-            return
-        candidate = self._word_before(end)
-        if candidate is None:
-            return
-        start, word = candidate
-        if word.isdecimal():
-            return
-        if len(self._waiting) >= MAX_WAITING:
-            self.status.set_text('Prediction busy. This word was kept as typed.')
-            return
-        request = self._request(word, text)
-        self._waiting.append((request, WordRange(buffer, start, end)))
-        self._preview_request = None
-        self._preview_output = None
-        self._start_next()
+        before = position.copy()
+        before.backward_chars(len(text))
+        candidate = self._word_before(before)
+        start_offset = candidate[0].get_offset() if candidate else before.get_offset()
+        inserted = buffer.get_text(buffer.get_iter_at_offset(start_offset), position, True)
+        for match in LATIN_TOKEN.finditer(inserted):
+            if match.end() == len(inserted):
+                break
+            word = match[0]
+            if word.isdecimal() or len(word) > MAX_WORD or word in self._translations:
+                continue
+            if len(self._waiting) >= MAX_WAITING:
+                self.status.set_text('Prediction busy. Some words were kept as typed.')
+                break
+            request = self._request(word, inserted[match.end()])
+            start = buffer.get_iter_at_offset(start_offset + match.start())
+            end = buffer.get_iter_at_offset(start_offset + match.end())
+            self._waiting.append((request, WordRange(buffer, start, end)))
+        if self._waiting:
+            self._preview_request = None
+            self._preview_output = None
+            self._start_next()
 
     def _start_next(self):
         if self._pending or not self._waiting:
@@ -216,7 +223,7 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
         self._render_rows()
         return False
 
-    def _arabic_text(self, start, end):
+    def _arabic_text(self, start, end, *, keep_unresolved=False):
         draft = self.buffer.get_text(start, end, True)
         offset = start.get_offset()
         cursor = self.buffer.get_iter_at_mark(self.buffer.get_insert()).get_offset()
@@ -230,9 +237,9 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
             if (self._preview_output and self._preview_request
                     and offset + match.end() == cursor and token == self._preview_request.word):
                 return self._preview_output
-            return ''
+            return token if keep_unresolved else ''
 
-        return LATIN_TOKEN.sub(render_token, draft)
+        return render_text(draft, render_token, phrases=self._phrases)
 
     def _render_rows(self):
         output = self._arabic_text(*self.buffer.get_bounds())
@@ -309,11 +316,14 @@ class ScratchpadWindow(Gtk.ApplicationWindow):
 
 
 class ScratchpadApplication(Gtk.Application):
-    def __init__(self, *, synthetic_helper=False, bundle=None):
-        app_id = application_id(bundle)
+    def __init__(self, *, synthetic_helper=False, bundle=None, profile=None):
+        app_id = application_id(profile or bundle)
+        self._phrases = profile is not None
         python = Path(__file__).resolve().parents[1] / '.venv/bin/python'
         self._helper_command = None
-        if bundle is not None:
+        if profile is not None:
+            self._helper_command = [python, '-m', 'scratchpad.release_model', 'serve', profile.resolve()]
+        elif bundle is not None:
             bundle = Path(bundle).resolve()
             self._helper_command = [python, '-m', 'model_pilot.inference_helper', bundle]
         elif synthetic_helper:
@@ -343,7 +353,7 @@ class ScratchpadApplication(Gtk.Application):
             Gtk.StyleContext.add_provider_for_display(
                 Gdk.Display.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
             )
-            self.window = ScratchpadWindow(self, helper_command=self._helper_command)
+            self.window = ScratchpadWindow(self, helper_command=self._helper_command, phrases=self._phrases)
             self.add_action(self._quit_action())
             start_over = Gio.SimpleAction.new('start-over', None)
             start_over.connect('activate', lambda *_: self.window.start_over())
@@ -366,12 +376,16 @@ class ScratchpadApplication(Gtk.Application):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--bundle', type=Path, help='local v1 inference bundle directory')
+    models = parser.add_mutually_exclusive_group()
+    models.add_argument('--bundle', type=Path, help='local v1 inference bundle directory')
+    models.add_argument('--profile', type=Path, help='local release model directory')
     options = parser.parse_args()
+    if options.profile and not all(path.is_file() for path in profile_inputs(options.profile)):
+        parser.error('--profile must point to a complete release model directory')
     synthetic_helper = os.environ.get('ARANSIYA_SYNTHETIC_HELPER') == '1'
-    application = ScratchpadApplication(synthetic_helper=synthetic_helper, bundle=options.bundle)
+    application = ScratchpadApplication(synthetic_helper=synthetic_helper, bundle=options.bundle, profile=options.profile)
     status = application.run([])
-    if (synthetic_helper or options.bundle is not None) and application.window is not None:
+    if (synthetic_helper or options.bundle is not None or options.profile is not None) and application.window is not None:
         # Wait after the GTK loop so helper cleanup cannot block the editor.
         application.window.worker.join(17)
     raise SystemExit(status)

@@ -46,7 +46,8 @@ def digit_anchor(latin, arabic):
     return latin == arabic and latin.isascii() and latin.isdecimal()
 
 
-def extract(csv_bytes, manifest_bytes):
+def extract(csv_bytes, manifest_bytes, *, final_test=False):
+    splits = ("test",) if final_test else DEVELOPMENT_SPLITS
     if sha256(manifest_bytes).hexdigest() != LOCKED_SHA256:
         raise ValueError("assignment manifest does not match the locked digest")
     manifest = json.loads(manifest_bytes)
@@ -55,11 +56,11 @@ def extract(csv_bytes, manifest_bytes):
 
     development = {
         row["record"]: row["split"]
-        for row in manifest["assignments"] if row["split"] in DEVELOPMENT_SPLITS
+        for row in manifest["assignments"] if row["split"] in splits
     }
-    pairs = {split: [] for split in DEVELOPMENT_SPLITS}
-    counts = {split: Counter() for split in DEVELOPMENT_SPLITS}
-    targets = {split: defaultdict(set) for split in DEVELOPMENT_SPLITS}
+    pairs = {split: [] for split in splits}
+    counts = {split: Counter() for split in splits}
+    targets = {split: defaultdict(set) for split in splits}
     reader = csv.DictReader(io.StringIO(csv_bytes.decode("utf-8-sig"), newline=""))
     for record, row in enumerate(reader, 1):
         split = development.get(record)
@@ -96,13 +97,13 @@ def extract(csv_bytes, manifest_bytes):
             })
             targets[split][left].add(right)
 
-    for split in DEVELOPMENT_SPLITS:
+    for split in splits:
         tally = counts[split]
         tally["pairs"] = len(pairs[split])
         tally["distinct_latin"] = len(targets[split])
         tally["conflicting_latin"] = sum(len(values) > 1 for values in targets[split].values())
     return {
-        "rule": "doda-word-pairs-v1",
+        "rule": "doda-word-pairs-test-v1" if final_test else "doda-word-pairs-v1",
         "assignment_sha256": LOCKED_SHA256,
         "source_sha256": manifest["source_sha256"],
         "counts": counts,

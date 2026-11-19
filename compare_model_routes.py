@@ -1,12 +1,10 @@
 """Measure CPU transliteration routing on the pinned development split."""
 
 import argparse
-from collections import Counter, defaultdict
 from contextlib import redirect_stdout
 from functools import partial
 import json
 from pathlib import Path
-import re
 from statistics import median
 import sys
 from time import perf_counter
@@ -15,46 +13,11 @@ import torch
 
 from model_pilot.bundle import load_bundle
 from model_pilot.data import load_development_data
+from scratchpad.phrases import render_text, shorten
+from scratchpad.release_model import human_references, routed_predict, training_references
 from validation_benchmark import benchmark
 
 
-def training_references(rows, source, minimum, agreement, excluded=()):
-    counts = defaultdict(Counter)
-    for row in rows:
-        if row["source"] == source and row["latin"] not in excluded:
-            counts[row["latin"]][row["arabic"]] += 1
-    lexicon = {}
-    for word, alternatives in counts.items():
-        winner = min(alternatives, key=lambda ref: (-alternatives[ref], ref))
-        support = alternatives[winner]
-        if support >= minimum and support * 100 >= alternatives.total() * agreement:
-            lexicon[word] = winner
-    return set(counts), lexicon
-
-
-def human_references(rows):
-    return training_references(rows, "doda_human", 3, 90)
-
-
-def routed_predict(word, encoder, ctc, human_forms, lexicon):
-    if word in lexicon:
-        return lexicon[word]
-    if word not in human_forms:
-        try:
-            return ctc(word)
-        except ValueError:
-            pass
-    return encoder(word)
-
-
-LATIN_WORD = re.compile(r"[A-Za-z0-9]+")
-ELONGATION = re.compile(r"([A-Za-z])\1{2,}")
-PHRASES = {
-    ("salla", "llaho", "3alayhi", "wasallam"): "صلى الله عليه وسلم",
-    ("salla", "allaho", "3alayhi", "wasallam"): "صلى الله عليه وسلم",
-    ("salla", "allaho", "3alayhi", "wa", "sallam"): "صلى الله عليه وسلم",
-    ("asba7na", "wa", "asbaha", "lmolko", "lilah"): "أصبحنا وأصبح الملك لله",
-}
 PROBES = (
     ("sallllllla llllaho 3alayhi wasallam", "صلى الله عليه وسلم"),
     ("salla allaho 3alayhi wa sallam", "صلى الله عليه وسلم"),
@@ -65,43 +28,17 @@ PROBES = (
 )
 
 
-def shorten(word):
-    return ELONGATION.sub(r"\1\1", word)
-
-
 def render_probe(text, predict, *, repair=False):
-    words = list(LATIN_WORD.finditer(text))
-    pieces = []
-    cursor = 0
-    index = 0
-    while index < len(words):
-        word = words[index]
-        pieces.append(text[cursor:word.start()])
-        match = None
-        if repair:
-            for phrase, arabic in PHRASES.items():
-                span = words[index:index + len(phrase)]
-                if tuple(shorten(w[0]).lower() for w in span) == phrase and all(
-                    text[left.end():right.start()].strip(" \t") == ""
-                    for left, right in zip(span, span[1:])
-                ):
-                    match = span, arabic
-                    break
-        if match is not None:
-            span, arabic = match
-            pieces.append(arabic)
-            cursor = span[-1].end()
-            index += len(span)
-            continue
+    def word_output(match):
+        word = match[0]
+        if word.isdecimal():
+            return word
         try:
-            token = word[0]
-            pieces.append(token if token.isdecimal() else predict(shorten(token) if repair else token))
+            return predict(shorten(word) if repair else word)
         except ValueError:
-            pieces.append(word[0])
-        cursor = word.end()
-        index += 1
-    pieces.append(text[cursor:])
-    return "".join(pieces)
+            return word
+
+    return render_text(text, word_output, phrases=repair)
 
 
 def measure(words, predict):

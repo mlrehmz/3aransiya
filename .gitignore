@@ -15,3 +15,9 @@ kaggle.json
 .venv/
 __pycache__/
 .pytest_cache/
+
+# Local pilot exports and scratch notes
+/3aransiya-t4-pilot/
+/3aransiya-t4-pilot (2)/
+/3aransiya-t4-pilot.zip
+/local-notes/
