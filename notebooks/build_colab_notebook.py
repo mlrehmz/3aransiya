@@ -239,6 +239,11 @@ for id_, kind, body in cells:
                 .replace("Train the GRU encoder–decoder and bidirectional GRU/CTC on the same development corpus.",
                          "Train the existing GRU encoder–decoder with 25% human and 75% grounded examples.")
                 .replace("t4-v2-one-pass", "t4-v2-human25")
+                .replace("then run all cells.", "then run the code cells one at a time in order. Check the setup and synthetic tests before starting training.")
+                .replace("upload the dataset and restore the saved `outputs/` folder before rerunning.",
+                         "upload the dataset and restore the saved run folder under `/content/outputs/` before rerunning.")
+                .replace("# Embedded project source snapshot for this notebook.",
+                         'print(f"Dataset verified: {WORD_PAIRS}")\n\n# Embedded project source snapshot for this notebook.')
                 .replace('["gru_encoder_decoder_v1", "bidirectional_gru_ctc_v1"]',
                          '["gru_encoder_decoder_v1"]')
                 .replace('"--dataset-version", "v2", "--epochs"', '"--dataset-version", "v2", "--human-weighted", "--epochs"')
