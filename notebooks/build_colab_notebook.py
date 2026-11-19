@@ -9,6 +9,7 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 parser = argparse.ArgumentParser(description="Build a Colab training notebook")
 parser.add_argument("--v2", action="store_true", help="build the expanded dataset notebook")
+parser.add_argument("--human-weighted", action="store_true", help="build the 25%% human v2 experiment")
 options = parser.parse_args()
 
 files = sorted(Path("model_pilot").glob("*.py")) + [
@@ -225,7 +226,7 @@ Keep the same code, Python, PyTorch, GPU type, and training settings when resumi
 ]
 notebook_cells = []
 for id_, kind, body in cells:
-    if options.v2:
+    if options.v2 or options.human_weighted:
         body = (body.replace("resumable six-epoch Colab comparison", "expanded v2 Colab comparison")
                 .replace("doda-word-pairs-v1.json", "doda-word-pairs-v2.json")
                 .replace("842ba2460f0d4219cb90a41cca0cdc079d18fd1146d6756a9562833c9f2fbfbb",
@@ -233,6 +234,16 @@ for id_, kind, body in cells:
                 .replace("t4-comparison-6epoch-v1", "t4-v2-one-pass")
                 .replace("EPOCHS = 6", "EPOCHS = 1")
                 .replace('"--epochs", str(EPOCHS)', '"--dataset-version", "v2", "--epochs", str(EPOCHS)'))
+    if options.human_weighted:
+        body = (body.replace("expanded v2 Colab comparison", "25% human-data v2 comparison")
+                .replace("Train the GRU encoder–decoder and bidirectional GRU/CTC on the same development corpus.",
+                         "Train the existing GRU encoder–decoder with 25% human and 75% grounded examples.")
+                .replace("t4-v2-one-pass", "t4-v2-human25")
+                .replace('["gru_encoder_decoder_v1", "bidirectional_gru_ctc_v1"]',
+                         '["gru_encoder_decoder_v1"]')
+                .replace('"--dataset-version", "v2", "--epochs"', '"--dataset-version", "v2", "--human-weighted", "--epochs"')
+                .replace("The two architectures have independent checkpoints.",
+                         "The sampling report records occurrence exposures and unique rows by source."))
     cell = {"id": id_, "cell_type": kind, "metadata": {}, "source": body.splitlines(keepends=True)}
     if kind == "code":
         compile(body, f"colab:{id_}", "exec")
@@ -246,5 +257,10 @@ notebook = {
         "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
     },
 }
-name = "colab_t4_v2.ipynb" if options.v2 else "colab_t4_pilot.ipynb"
+if options.human_weighted:
+    name = "colab_t4_v2_human25.ipynb"
+elif options.v2:
+    name = "colab_t4_v2.ipynb"
+else:
+    name = "colab_t4_pilot.ipynb"
 Path("notebooks", name).write_text(json.dumps(notebook, indent=2, ensure_ascii=False) + "\n")

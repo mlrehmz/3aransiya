@@ -45,6 +45,38 @@ class TrainingResumeTest(unittest.TestCase):
                 self.assertEqual(step, 6)
                 self.assertEqual(checkpoint.digest(), digest)
 
+    def test_human_weighted_resume_matches_uninterrupted_weights(self):
+        import torch
+
+        from model_pilot.data import DevelopmentData, Vocabulary
+        from model_pilot.train import Schedule, epoch_batches, train
+
+        rows = [
+            {"latin": "T7", "arabic": "طح", "source": "doda_human"},
+            *[{"latin": word, "arabic": "ت", "source": "doda_grounded"}
+              for word in ("t", "tt", "h", "7", "T", "Tt", "hh", "t7", "ht")],
+        ]
+        data = DevelopmentData(rows, (), Vocabulary.from_training(rows))
+        schedule = Schedule(1, 4, 42, human_weighted=True)
+        batches = epoch_batches(rows, schedule, 0)
+        self.assertEqual([len(batch) for batch in batches], [4, 4, 2])
+        self.assertEqual([batch.count(0) for batch in batches], [1, 1, 0])
+        grounded = [index for batch in batches for index in batch if index]
+        self.assertEqual(len(set(grounded)), 8)
+        args = (schedule, torch.device("cpu"), "weighted-fixture")
+        with TemporaryDirectory() as temp:
+            first, second = Path(temp) / "first", Path(temp) / "second"
+            first.mkdir()
+            second.mkdir()
+            architecture = "gru_encoder_decoder_v1"
+            expected, _, _, _ = train(data, architecture, first, *args)
+            _, _, step, total = train(data, architecture, second, *args, step_limit=1)
+            self.assertEqual((step, total), (1, 3))
+            resumed, _, step, _ = train(data, architecture, second, *args)
+            self.assertEqual(step, total)
+            for name, weights in expected.state_dict().items():
+                torch.testing.assert_close(resumed.state_dict()[name], weights, rtol=0, atol=0)
+
     def test_resume_retries_epoch_validation_before_training_more_batches(self):
         import torch
 

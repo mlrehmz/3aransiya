@@ -22,4 +22,17 @@ Use 32 human and 96 grounded occurrences per full batch. Draw deterministically 
 
 At step 9,146, report strict and variant-aware scores and missing outputs using the same v1-defined slices and the same v2 coverage breakdown. Evaluate both checkpoints on the fixed spelling probes separately. If common and overall accuracy improve while still-unseen accuracy holds, the result supports giving human examples more weight at this budget. If the slices trade off, report both effects before choosing another run. The locked test remains closed.
 
-**Proposed next action:** Build the resumable Colab variant for this one comparison. No new training was run during this review.
+## Notebook and local verification
+
+Open [the 25% human-data notebook](../notebooks/colab_t4_v2_human25.ipynb) on a Colab T4 and upload `doda-word-pairs-v2.json` directly to `/content/`. The notebook embeds the required code. Its independent run directory is `/content/outputs/t4-v2-human25/gru_encoder_decoder_v1/`. It saves after every update and exports validation reports, source counts, and the Fedora inference bundle. To recover after a full Colab reset, keep a copy of the run directory and restore it along with the dataset.
+
+A local audit of the pinned v2 dataset confirmed the same deterministic order on a repeat run, 9,145 batches of 128 and a final batch of 10, with the mix checked in every batch.
+
+| Source | Scheduled exposures | Distinct source rows |
+| --- | ---: | ---: |
+| Human Darija | 292,642 | 156,219 |
+| Grounded synthetic | 877,928 | 877,928 |
+
+The sampler groups examples by length within each source and shuffles full batches. The comparison measures the resulting sampling policy, which changes both exposure weights and batch order. Three local checkpoint tests passed, including exact equality between resumed and uninterrupted weights for the weighted sampler on a synthetic fixture.
+
+The next decision is whether to run the notebook on Colab. The corpus run and spelling-probe comparison are pending.
